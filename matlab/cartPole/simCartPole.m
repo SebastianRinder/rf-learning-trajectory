@@ -11,10 +11,10 @@ function [sNext, reward, toBreak] = simCartPole(state, action, bounds)
     Length          = 0.5;      %Half of the length of the pole 
     PoleMass_Length = Mass_Pole * Length;
     Force_Mag       = 10;
-    Tau             = 0.04;     %Time interval for updating the values
+    Tau             = 0.02;     %Time interval for updating the values
     Fourthirds      = 4.0/3.0;
 
-    action = min(max(action, bounds.action(1,1)), bounds.action(1,2));  %apply action bounds
+    %action = min(max(action, bounds.action(1,1)), bounds.action(1,2));  %apply action bounds
     force = action * Force_Mag;
 
     temp     = (force + PoleMass_Length * omega_dot * omega_dot * sin(omega)) / Total_Mass;

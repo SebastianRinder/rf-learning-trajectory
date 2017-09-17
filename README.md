@@ -1,4 +1,4 @@
-# rf-learning-trajectory
+# trajectory
 
 Reinforcement Learning on Trajectory Kernels
 

@@ -7,7 +7,8 @@ function [x,f] = globalMin(fun,x0,lb,ub)
     
     %[x,f] = fmincon(fun,x0,[],[],[],[],lb,ub);
     
-    opts = optimoptions(@patternsearch,'MeshTolerance',1e-6);
+    %opts = optimoptions(@patternsearch,'MeshTolerance',1e-6);
+    opts = [];
     [x,f] = patternsearch(fun,x0,[],[],[],[],lb,ub,[],opts);
 end
 

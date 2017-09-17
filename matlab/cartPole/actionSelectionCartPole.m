@@ -1,10 +1,16 @@
 function [aNext, quad] = actionSelectionCartPole(theta, state, action)
     sigma = 0.1;
         
-    f(1,1) = state.velocity;
-    f(1,2) = state.acceleration;
+%     f(1,1) = state.velocity;
+%     f(1,2) = state.acceleration;
+%     f(1,3) = state.angle;
+%     f(1,4) = state.angleVelocity;
+
+    f(1,1) = state.position;
+    f(1,2) = state.velocity;
     f(1,3) = state.angle;
     f(1,4) = state.angleVelocity;
+
 
     noise = randn * sigma;
     mu = theta * f';

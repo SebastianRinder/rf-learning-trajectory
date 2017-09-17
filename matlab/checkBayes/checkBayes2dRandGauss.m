@@ -73,12 +73,12 @@ function [obj, lb, ub, hyper] = objective(isGaussMix)
         minSigma = 2;
         obj = RandomGaussianMixtureFunction(nbGauss, muRange, minSigma);
         [lb, ub] = obj.getRange();
-        hyper = 0.1;
+        hyper = [0.1, 1];
     else
         obj = @(x) sin(x(1))+cos(x(2));
         lb = [-2*pi,0];
         ub = [2*pi, 4*pi];
-        hyper = 1;
+        hyper = [1 1];
     end
 end
 
