@@ -1,0 +1,24 @@
+%             k = 1:2;
+%             cmap = colormap;
+%             m = 63/(max(eta)-min(eta));
+%             for j=1:i                
+%                 y = round(m * (eta(j,1) - min(eta)) + 1);
+%                 plot(k,theta(j,k),'Color',cmap(y,:));
+%                 hold on;
+%             end
+%             colorbar;
+%             caxis([min(eta), max(eta)]);
+
+%             figure;
+%             m = 63/(max(max(acq))-min(min(acq)));
+%             for j = 1:10
+%                 for k = 1:10
+%                     y = round(m * (acq(j,k) - min(min(acq))) + 1);
+%                     plot(1:2,[X(j,k), Y(j,k)],'Color',cmap(y,:));
+%                     hold on;
+%                 end
+%             end
+%             plot(1:2,theta(i,1:2),'k');
+%             colorbar;
+%             caxis([min(eta), max(eta)]);
+
