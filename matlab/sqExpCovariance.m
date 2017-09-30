@@ -1,12 +1,14 @@
-function covMatrix = sqExpCovariance(thetai, thetaj, ~, hyper)
-    if isempty(thetai)
-        thetai = thetaj;
+function covMatrix = sqExpCovariance(Xi, Xj, theta, ~, ~)
+    hyper.l = theta(1);
+    hyper.f = theta(2);
+    if isempty(Xi)
+        Xi = Xj;
     end
-    covMatrix = zeros(size(thetai,1), size(thetaj,1));
-    for i=1:size(thetai,1)
-        for j=1:size(thetaj,1)
-            r = thetai(i,:) - thetaj(j,:);
-            covMatrix(i,j) = hyper(1) * exp( -hyper(2) * (r*r') / 2);
+    covMatrix = zeros(size(Xi,1), size(Xj,1));
+    for i=1:size(Xi,1)
+        for j=1:size(Xj,1)
+            r = Xi(i,:) - Xj(j,:);
+            covMatrix(i,j) = hyper.f ^ 2 * exp( -(r*r') / (2 * hyper.l ^ 2));
         end
     end
 end

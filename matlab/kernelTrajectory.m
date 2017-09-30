@@ -1,5 +1,4 @@
-function K = kernelTrajectory(thetai, thetaj, traji, trajj, hyper)    
-    global actionSelectionFun;
+function K = kernelTrajectory(xi, xj, traji, trajj, hyper, actionSelectionFcn)    
     trajectoriesPerPolicy = size(trajj,2);
     
     if isempty(traji)   %unknownTrajectory -> importance Sampling
@@ -12,8 +11,8 @@ function K = kernelTrajectory(thetai, thetaj, traji, trajj, hyper)
             for t=1:size(traj,1)
                 state = traj{t,1}.state;
                 action = traj{t,1}.action;
-                [~,quadNew] = actionSelectionFun(thetai, state, action);
-                [~,quadj] = actionSelectionFun(thetaj, state, action);
+                [~,quadNew] = actionSelectionFcn(xi, state, action);
+                [~,quadj] = actionSelectionFcn(xj, state, action);
                 tempD(1,1) = tempD(1,1) * exp(quadNew - quadj);
                 tempD(2,1) = tempD(2,1) + quadNew - quadj;
                 tempD(3,1) = tempD(3,1) + quadj - quadNew;
@@ -34,8 +33,8 @@ function K = kernelTrajectory(thetai, thetaj, traji, trajj, hyper)
             for t=1:size(traj,1)
                 state = traj{t,1}.state;
                 action = traj{t,1}.action;
-                [~,quadi] = actionSelectionFun(thetai, state, action);
-                [~,quadj] = actionSelectionFun(thetaj, state, action);
+                [~,quadi] = actionSelectionFcn(xi, state, action);
+                [~,quadj] = actionSelectionFcn(xj, state, action);
                 D1 = D1 + quadi - quadj;
             end
         end
@@ -46,8 +45,8 @@ function K = kernelTrajectory(thetai, thetaj, traji, trajj, hyper)
             for t=1:size(traj,1)
                 state = traj{t,1}.state;
                 action = traj{t,1}.action;
-                [~,quadi] = actionSelectionFun(thetai, state, action);
-                [~,quadj] = actionSelectionFun(thetaj, state, action);
+                [~,quadi] = actionSelectionFcn(xi, state, action);
+                [~,quadj] = actionSelectionFcn(xj, state, action);
                 D2 = D2 + quadj - quadi;
             end
         end
@@ -55,7 +54,7 @@ function K = kernelTrajectory(thetai, thetaj, traji, trajj, hyper)
         D = (D1 + D2) / trajectoriesPerPolicy; %normalize
     end
     
-    %K = exp(-hyper * D);
-    K = D;
+    K = hyper.f .* exp(-hyper.l * D);
+    %K = D;
 end
 

@@ -16,7 +16,7 @@ function [sNext, reward, toBreak] = simCartPole(state, action, bounds)
 
     %action = min(max(action, bounds.action(1,1)), bounds.action(1,2));  %apply action bounds
     force = action * Force_Mag;
-
+    
     temp     = (force + PoleMass_Length * omega_dot * omega_dot * sin(omega)) / Total_Mass;
     omegaacc = (g * sin(omega) - cos(omega) * temp) / (Length * (Fourthirds - Mass_Pole * cos(omega) * cos(omega) / Total_Mass));
     xacc     = temp - PoleMass_Length * omegaacc * cos(omega) / Total_Mass;

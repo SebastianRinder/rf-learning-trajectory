@@ -1,72 +1,84 @@
 function checkBayes2dRandGauss()
     addpath('..');
+    addpath('../matlab');
+    load('vararginForFit.mat','varargin');
     
+    %[func, lb, ub] = objectiveFcn(isGaussMix);
+    load('gaussMix.mat');
+    useMatlabBayes = 0;
     isGaussMix = 1;
-    [func, lb, ub, hyper] = objective(isGaussMix);    
     if isGaussMix
-        objFun = @(x) func.eval(x);
+        if useMatlabBayes
+            objFun = @(x) -1.*func.eval(table2array(x));
+        else
+            objFun = @(x) -1.*func.eval(x);
+        end
     else
         objFun = @(x) func(x);
     end
+%         
+%     points = 100;   
+%     x1 = linspace(lb(1),ub(1), points);
+%     x2 = linspace(lb(2),ub(2), points);
+%     [X1,X2] = meshgrid(x1,x2);
+%     
+%     obj = zeros(points,points);
+%     for j = 1:points
+%         for k = 1:points
+%             obj(j,k) = objFun([X1(j,k), X2(j,k)]);
+%         end
+%     end
+
+    dim = 2;
+    acqFcn = @expectedImprovement;
+    isDeterministic = false;
+    bayOptSteps = 100;
+    initialPolicies = 4;
+    objective = zeros(bayOptSteps,1);
+    policy = randPolicy(lb, ub, initialPolicies);
+    for i = 1:initialPolicies
+        if useMatlabBayes
+            objective(i,1) = objFun(array2table(policy(i,:)));
+        else
+            objective(i,1) = objFun(policy(i,:));
+        end
+    end     
+    
+    if ~useMatlabBayes
+        for i=1+initialPolicies:bayOptSteps+initialPolicies
+            gprMdl = fitGP(policy(1:i-1,:), objective(1:i-1), false);
             
-	theta(1,:) = randTheta(lb, ub);
-    eta(1,1) = objFun(theta(1,:));
-    disp(['step : ',num2str(1) ,'  |  cumulative reward: ', num2str(eta(1,1))]);    
+            fMean = @(x) predict(gprMdl, x);
+            [~,minFMean] = globalMin(fMean, lb, ub);
+            
+            negAcqFcn = @(x) -acqFcn(x, gprMdl, minFMean);
+            policy(i,:) = globalMin(negAcqFcn, lb, ub);
+            objective(i,1) = objFun(policy(i,:));
 
-    points = 100;
-    x1 = linspace(lb(1),ub(1), points);
-    x2 = linspace(lb(2),ub(2), points);
-    [X1,X2] = meshgrid(x1,x2);
-       
-    for j = 1:points
-        for k = 1:points
-            obj(j,k) = objFun([X1(j,k), X2(j,k)]);
-        end
-    end
+            disp(['step : ',num2str(i-initialPolicies) ,'  |  cumulative reward: ', num2str(objective(i,1))]);        
 
-    close all;
-    figure;
-    for i=2:100
-        clf;
-        K = sqExpCovariance([], theta(1:i-1,:), [], hyper);        
-        toMinimize = @(x) -acquisition(x, eta(1:i-1,:), theta(1:i-1,:), @sqExpCovariance, K, hyper, []);
-        theta(i,:) = globalMin(toMinimize, [], lb, ub);
-        eta(i,1) = objFun(theta(i,:));
-
-        disp(['step : ',num2str(i) ,'  |  cumulative reward: ', num2str(eta(i,1))]);        
-
-        if mod(i,1) == 0
-            for j = 1:100
-                for k = 1:100
-                    [EI(j,k), meanY(j,k), var(j,k)] = acquisition([X1(j,k), X2(j,k)], eta(1:i-1,1),...
-                        theta(1:i-1,:), @sqExpCovariance, K, hyper, []);
+            if mod(i-initialPolicies,bayOptSteps) == 0
+                if ~exist('myFig', 'var')
+                    myFig = figure();
                 end
+                plotting(policy(1:i,:), acqFcn, gprMdl, minFMean, myFig);
             end
-
-            subplot(2,2,1);
-            contour(X1,X2,obj);
-            colorbar;
-
-            subplot(2,2,2);
-            contour(X1,X2,meanY);
-            colorbar;
-
-            subplot(2,2,3);
-            contour(X1,X2,EI);
-            hold on;
-            plot(theta(:,1),theta(:,2),'r+');
-            plot(theta(end,1),theta(end,2),'k*');
-            colorbar;
-
-            subplot(2,2,4);
-            surf(X1,X2,EI);
-            colorbar;
         end
+    else
+%         global fitVars;
+%         fitVars = [];
+        for i=1:dim
+            X(1,i) = optimizableVariable(['X',int2str(i)], [lb(1,i) ub(1,i)]);
+        end
+        %fun = @(x) -objFun(x);
+        ret = bayesopt(objFun,X,'IsObjectiveDeterministic',isDeterministic,...
+        'AcquisitionFunctionName','expected-improvement',...
+        'MaxObjectiveEvaluations',100);
     end
 
 end
 
-function [obj, lb, ub, hyper] = objective(isGaussMix)
+function [obj, lb, ub, hyper] = objectiveFcn(isGaussMix)
     if isGaussMix
         nbGauss = 25;
         muRange = 10;

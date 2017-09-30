@@ -21,5 +21,5 @@ function [eta, traj] = execPolicyCartPole(theta, state0, episodes, worldBounds)
         end
         state = nextState;
     end
-    eta = cumReward; % / episodes;
+    eta = cumReward / episodes;
 end
