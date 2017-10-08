@@ -1,5 +1,6 @@
 # matlab autosave files
 *.m~
+*.asv
 
 # matlab data files
-*.mat
+###*.mat

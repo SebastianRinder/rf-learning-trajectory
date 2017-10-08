@@ -1,4 +1,4 @@
-function covMatrix = sqExpCovariance(Xi, Xj, theta, ~, ~)
+function covMatrix = sqExpCovariance(Xi, Xj, theta, ~)
     hyper.l = theta(1);
     hyper.f = theta(2);
     if isempty(Xi)
