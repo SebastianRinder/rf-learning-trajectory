@@ -176,7 +176,7 @@ classdef customBayesianOptimization
     end
     
     properties
-        customOpts;
+        customKernel;
     end
     
     methods
@@ -449,9 +449,10 @@ classdef customBayesianOptimization
     
     %% Hidden API
     methods(Hidden)
-        function this = customBayesianOptimization(Options, customOpts)
+        function this = customBayesianOptimization(Options, customKernel)
             this.PrivOptions = Options;
-            this.customOpts = customOpts;
+            this.customKernel = customKernel;
+            
             this = run(this);
         end
         
@@ -1717,7 +1718,7 @@ classdef customBayesianOptimization
         PrivFMinEstimatedTrace;
         PrivUserDataTrace;
     end
-
+    
     methods     % Dependent property getters
         function ObjectiveFcn = get.ObjectiveFcn(this)
             ObjectiveFcn = this.PrivOptions.ObjectiveFcn;
@@ -1831,24 +1832,24 @@ classdef customBayesianOptimization
             this.IterationStartTime = tic;
             this = processInitializationData(this);
             this = callPlotFcn(this, 'initial');
-            this = callOutputFcn(this, 'initial');
+%             this = callOutputFcn(this, 'initial');
             this = fitModels(this);
             [this.IncumbentF, this.IncumbentX] = findIncumbent(this);
             this = chooseNextPoint(this);
             iteration = this.NumObjectiveEvaluations + 1;
             
-%             this.customKernel.trajectory.data = cell(0);
-%             this.customKernel.trajectory.policy = [];
+            this.customKernel.trajectory.data = cell(0);
+            this.customKernel.trajectory.policy = [];
             
             while ~optimizationFinished(this, iteration)
                 % Perform feval
                 this = performFcnEval(this);
                 
-%                 this.customKernel.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data;
-%                 this.customKernel.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
+                this.customKernel.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data(1,:);
+                this.customKernel.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
                 
                 if this.MinObjective == this.ObjectiveTrace(end)
-                    visCartPole(this.PrivUserDataTrace{end,1}.data{1,1}, this.customOpts.bounds);
+                  visCartPole(this.customKernel.trajectory.data{iteration,1}, this.customKernel.simOpts.bounds);
                 end
                 
                 this = fitModels(this);
@@ -2145,6 +2146,9 @@ classdef customBayesianOptimization
                 ObjectiveFcnObjectiveEvaluationTime, this] = callObjFcn(this, this.XNext);
             % Store results in traces
             this.XTrain(end+1, :) = legalizePoints(this, this.XNext);
+%             if any(this.XTrain(end, :) ~= this.XNext)
+%                 keyboard;
+%             end
             this.FTrain(end+1) = Objective;
             if this.PrivOptions.NumCoupledConstraints > 0
                 this.ConstraintTrain(end+1,:) = ConstraintViolations;
@@ -2266,7 +2270,7 @@ classdef customBayesianOptimization
                     SigmaLowerBound = max(1e-8, 1e-4*nanstd(this.FTrain));
                     sigma0 = SigmaLowerBound;
                     ConstantFSigma = true;
-                    ObjectiveFcnGP = iFitrgpRobust(this.customOpts,this.XTrain, this.FTrain, SigmaLowerBound, ...
+                    ObjectiveFcnGP = iFitrgpRobust(this.customKernel, this.XTrain, this.FTrain, SigmaLowerBound, ...
                         'BasisFunction', 'constant', ...
                         'ConstantKernelParameters', ConstantKernelParameters, ...
                         'ConstantSigma', ConstantFSigma,...
@@ -2280,7 +2284,7 @@ classdef customBayesianOptimization
                 else
                     SigmaLowerBound = max(1e-8, nanstd(this.FTrain)*1e-2);
                     sigma0 = max(SigmaLowerBound, nanstd(this.FTrain)/this.PrivOptions.Sigma0Divisor);
-                    ObjectiveFcnGP = iFitrgpRobust(this.customOpts,this.XTrain, this.FTrain, SigmaLowerBound, ...
+                    ObjectiveFcnGP = iFitrgpRobust(this.customKernel, this.XTrain, this.FTrain, SigmaLowerBound, ...
                         'BasisFunction', 'constant', ...
                         'ConstantKernelParameters', ConstantKernelParameters, ...
                         'FitMethod', 'exact', ...
@@ -2298,7 +2302,7 @@ classdef customBayesianOptimization
                     KernelParameters =  ObjectiveFcnGP.KernelInformation.KernelParameters;
                     KernelParameters(end) = KernelParameters(end)*BullAdjustmentN;
                     % recompute alphas only
-                    ObjectiveFcnGP = iFitrgpRobust(this.customOpts,this.XTrain, this.FTrain, SigmaLowerBound,...
+                    ObjectiveFcnGP = iFitrgpRobust(this.customKernel, this.XTrain, this.FTrain, SigmaLowerBound,...
                         'KernelFunction', 'ardmatern52', ...
                         'KernelParameters', KernelParameters, ...
                         'Sigma', ObjectiveFcnGP.Sigma, ...
@@ -2322,7 +2326,7 @@ classdef customBayesianOptimization
             else
                 [KernelParams0, ConstantKernelParameters] = kernelParamsForFitrgp(this, this.ObjectiveEvaluationTimeTrain);
                 SigmaLowerBound = std(log(this.ObjectiveEvaluationTimeTrain(FitIndices)))*1e-2;
-                ObjectiveEvaluationTimeGP = iFitrgpRobust(this.customOpts,this.XTrain(FitIndices,:), ...
+                ObjectiveEvaluationTimeGP = iFitrgpRobust(this.customKernel, this.XTrain(FitIndices,:), ...
                     log(this.ObjectiveEvaluationTimeTrain(FitIndices)), ...
                     SigmaLowerBound, ...
                     'BasisFunction', 'constant', ...
@@ -2363,7 +2367,7 @@ classdef customBayesianOptimization
                     end
                     sigma0 = SigmaLowerBound;
                     ConstantSigma = true;
-                    ConstraintGP = iFitrgpRobust(this.customOpts,this.XTrain, ConstraintTrain, SigmaLowerBound, ...
+                    ConstraintGP = iFitrgpRobust(this.customKernel, this.XTrain, ConstraintTrain, SigmaLowerBound, ...
                         'BasisFunction', 'constant', ...
                         'ConstantKernelParameters', ConstantKernelParameters, ...
                         'ConstantSigma', ConstantSigma,...
@@ -2381,7 +2385,7 @@ classdef customBayesianOptimization
                     else
                         SigmaLowerBound = 1e-2*std;
                     end
-                    ConstraintGP = iFitrgpRobust(this.customOpts,this.XTrain, ConstraintTrain, SigmaLowerBound, ...
+                    ConstraintGP = iFitrgpRobust(this.customKernel, this.XTrain, ConstraintTrain, SigmaLowerBound, ...
                         'BasisFunction', 'constant', ...
                         'ConstantKernelParameters', ConstantKernelParameters, ...
                         'FitMethod', 'exact', ...
@@ -2405,7 +2409,7 @@ classdef customBayesianOptimization
             else
                 [KernelParams0, ConstantKernelParameters] = kernelParamsForFitrgp(this, this.ErrorTrain);
                 SigmaLowerBound = nanstd(this.ErrorTrain)*1e-4;
-                ErrorGP = iFitrgpRobust(this.customOpts,this.XTrain, this.ErrorTrain, SigmaLowerBound, ...
+                ErrorGP = iFitrgpRobust(this.customKernel, this.XTrain, this.ErrorTrain, SigmaLowerBound, ...
                     'BasisFunction', 'constant', ...
                     'ConstantKernelParameters', ConstantKernelParameters, ...
                     'FitMethod', 'exact', ...
@@ -3107,7 +3111,7 @@ if ~isscalar(val) || ~isnumeric(val) || ~isreal(val) || ~isfinite(val)
 end
 end
 
-function GP = iFitrgpRobust(customOpts, X, Y, SigmaLowerBound, varargin)
+function GP = iFitrgpRobust(customKernel, X, Y, SigmaLowerBound, varargin)
 % Fit a GP. If it fails due to singularity, iteratively double
 % SigmaLowerBound until it succeeds (up to 10 times). If it never succeeds,
 % return [];
@@ -3120,13 +3124,14 @@ success = false;
 doublings = 0;
 C = bayesoptim.suppressWarnings();
 
-kernelFcn = @(Xm, Xn, theta) customOpts.covarianceFcn(Xm, Xn, theta, customOpts);
+kernelFcn = @(Xm, Xn, theta) customKernel.covarianceFcn(Xm, Xn, theta, customKernel);
 
 for i=1:size(varargin,2)
     if strcmp('KernelParameters', varargin{i})
         kParams = varargin{i+1}(end-1:end);
     end
 end
+
 
 varargin{end+1} = 'ConstantKernelParameters';
 varargin{end+1} = logical([0;0]);
@@ -3137,7 +3142,7 @@ varargin{end+1} = kernelFcn;
 %varargin{end+1} = 'squaredexponential';
 
 while ~success && doublings <= 10
-    try
+    try        
         GP = compact(fitrgp(X, Y, varargin{:}, 'SigmaLowerBound', SigmaLowerBound));
         success = true;
     catch me

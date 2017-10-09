@@ -1,4 +1,4 @@
-function Results = customBayesopt(ObjectiveFcn, VariableDescriptions, customOpts, varargin)
+function Results = customBayesopt(ObjectiveFcn, VariableDescriptions, customKernel, varargin)
 %BAYESOPT   Find the global minimum of a function using Bayesian
 %Optimization.
 %
@@ -284,5 +284,5 @@ function Results = customBayesopt(ObjectiveFcn, VariableDescriptions, customOpts
 %   Copyright 2016 The MathWorks, Inc.
 
 Options = bayesoptim.BayesoptOptions(ObjectiveFcn, VariableDescriptions, varargin);
-Results = customBayesianOptimization(Options, customOpts);
+Results = customBayesianOptimization(Options, customKernel);
 end
