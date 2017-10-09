@@ -1,10 +1,8 @@
-function [sNext, reward, finished] = simCartPole(state, action, simOpts)
-    bounds = simOpts.bounds;
-    
+function [sNext, reward, finished] = simCartPole(state, action, bounds)
     x          = state.position;
     x_dot      = state.velocity;
     omega      = state.angle;
-    omega_dot  = state.angleVelocity;
+    omega_dot  = state.angularVelocity;
 
     g               = 9.8;      %Gravity
     Mass_Cart       = 1.0;      %Mass of the cart is assumed to be 1Kg
@@ -16,7 +14,7 @@ function [sNext, reward, finished] = simCartPole(state, action, simOpts)
     Tau             = 0.02;     %Time interval for updating the values
     Fourthirds      = 4.0/3.0;
 
-    action = bound(action, bounds.action);
+%     action = bound(action, bounds.action);
     force = action * Force_Mag;
     
     sinOmega = sin(omega);
@@ -36,31 +34,26 @@ function [sNext, reward, finished] = simCartPole(state, action, simOpts)
     sNext.velocity = x_dot;
     sNext.acceleration = xacc;
     sNext.angle = omega;
-    sNext.angleVelocity = omega_dot;
-
+    sNext.angularVelocity = omega_dot;
+    
     reward = 1;
-    finished = false;
+    if outBounds(x, bounds.rewardPosition)
+        reward = reward - 1;
+    end
+    if outBounds(omega, bounds.rewardAngle)
+        reward = reward - 1;
+    end
 
-    if ~inBounds(x, bounds.position) || ~inBounds(x, bounds.angle)
-        finished = true;
-%     else
-%         if inBounds(x, bounds.rewardPosition)
-%         	reward = reward + 1;
-%         else
-%             reward = reward - 1;
-%         end
-%         if inBounds(omega, bounds.rewardAngle)  %in angular reward bounds
-%             reward = reward + 1;
-%         else
-%             reward = reward - 1;
-%         end
+    finished = false;
+    if outBounds(x, bounds.position) || outBounds(omega, bounds.angle)
+        finished = true;   
     end
 end
 
-function ret = inBounds(x, bounds)
+function ret = outBounds(x, bounds)
 	minBound = min(bounds);
     maxBound = max(bounds);
-    ret = x > minBound && x < maxBound;
+    ret = x < minBound || x > maxBound;
 end
 
 function ret = bound(x, bounds)

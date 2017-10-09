@@ -16,30 +16,30 @@ function ret = mainCartPole()
     optimizeNoiseHyper = 0;
     acqFcn = @expectedImprovement;
     
-	simOpts.bounds.position = [-2.4, 2.4];
-    simOpts.bounds.angle = [-12 * pi / 180, 12 * pi / 180];
-    %simOpts.bounds.rewardPosition = [-0.5, 0.5];
-    %simOpts.bounds.rewardAngle = [-pi/9, pi/9];    
-    simOpts.bounds.action = [-1,1]; %force applied to the cart
-    %simOpts.bounds.acceleration = [-1,1];
-    %simOpts.bounds.velocity = [-1,1];
+    global opts;
     
-    simOpts.state0.position = 0;
-    simOpts.state0.velocity = 0;
-    simOpts.state0.acceleration = 0;
-    simOpts.state0.angle = 0.02;
-    simOpts.state0.angleVelocity = 0;
+    %simOpts.actionList = [-1,1];
+	opts.bounds.position = [-5, 5];
+    opts.bounds.angle = [-90 * pi / 180, 90 * pi / 180];
+    opts.bounds.rewardPosition = [-1, 1];
+    opts.bounds.rewardAngle = [-12 * pi / 180, 12 * pi / 180];
+    %opts.bounds.action = [-1,1]; %force applied to the cart
+        
+    opts.state0.position = 0;
+    opts.state0.velocity = 0;
+    opts.state0.acceleration = 0;
+    opts.state0.angle = 0;
+    opts.state0.angularVelocity = 0;
     
-    simOpts.timeSteps = 1000;
-    simOpts.execPolicyFcn = @execPolicyCartPole;
+    opts.timeSteps = 1000;
     
-    global customKernel;
-    customKernel.covarianceFcn = @sqExpCovariance;
+    opts.execPolicyFcn = @execPolicyCartPole;
+    opts.actionSelectionFcn = @actionSelectionCartPoleConti;
+    opts.covarianceFcn = @sqExpCovariance;
+    opts.trajectoriesPerPolicy = trajectoriesPerPolicy;
+    
     %customKernel.covarianceFcn = @trajectoryCovariance;
-    customKernel.actionSelectionFcn = @actionSelectionCartPole;
-    customKernel.trajectoriesPerPolicy = trajectoriesPerPolicy;
-    customKernel.simOpts = simOpts;
-
+    
     if ~useMatlabBayes
         ret = cell(trials,1);
         for trial = 1:trials            
@@ -106,8 +106,8 @@ function ret = mainCartPole()
         end
         close all;
         tic;
-
-        ret = customBayesopt(@negObjectiveFcn, policy, customKernel,...
+        
+        ret = customBayesopt(@negObjectiveFcn, policy, opts,...
             'IsObjectiveDeterministic',isDeterministic,...
             'AcquisitionFunctionName','expected-improvement',...
             'MaxObjectiveEvaluations',bayOptSteps,...
@@ -117,15 +117,15 @@ function ret = mainCartPole()
 end
 
 function [negObjective, constraints, trajectory] = negObjectiveFcn(x)
-    global customKernel;
+    global opts;
     dim = size(x,2);
     
     policy = zeros(1,dim);
     for i=1:dim
         policy(1,i) = x.(['policy',int2str(i)]);
     end
-    for i = customKernel.trajectoriesPerPolicy:-1:1
-        [tempObjective(1,i), trajectory.data{1,i}] = execPolicyCartPole(policy, customKernel.simOpts);
+    for i = opts.trajectoriesPerPolicy:-1:1
+        [tempObjective(1,i), trajectory.data{1,i}] = execPolicyCartPole(policy, opts);
     end
     
     negObjective = -mean(tempObjective);

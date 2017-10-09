@@ -1,18 +1,23 @@
-function [eta, traj] = execPolicyCartPole(policy, simOpts)
+function [eta, traj] = execPolicyCartPole(policy, opts)
     cumReward = 0;
-    state = simOpts.state0;    
-    traj = cell(simOpts.timeSteps,1);
+    state = opts.state0;    
+    traj = cell(opts.timeSteps,1);
     
-    for i=1:simOpts.timeSteps
-        action = actionSelectionCartPole(policy,state,[]);
-        [nextState, reward, finished] = simCartPole(state, action, simOpts);
+    %policy = reshape(policy, [size(policy,2)/2, 2])';
+    
+    for i=1:opts.timeSteps
+        [action, probs] = opts.actionSelectionFcn(policy,state,[]);
+        [nextState, reward, finished] = simCartPole(state, action, opts.bounds);
         
-        if i==simOpts.timeSteps
-            reward = min(0,reward) * 500; %500 reward if in one reward bound, 1000 if in both
-        end        
+        if i==opts.timeSteps
+            if reward == 1
+                reward = 1001;
+            end
+        end
         cumReward = cumReward + reward;
         traj{i,1}.state = state;
         traj{i,1}.action = action;
+        traj{i,1}.probs = probs;
         traj{i,1}.cumReward = cumReward;        
         
         if finished
@@ -21,5 +26,5 @@ function [eta, traj] = execPolicyCartPole(policy, simOpts)
         end
         state = nextState;
     end
-    eta = cumReward / simOpts.timeSteps;
+    eta = cumReward / opts.timeSteps;
 end
