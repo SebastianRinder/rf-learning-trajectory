@@ -1837,19 +1837,19 @@ classdef customBayesianOptimization
             this = chooseNextPoint(this);
             iteration = this.NumObjectiveEvaluations + 1;
             
-%             this.customKernel.trajectory.data = cell(0);
-%             this.customKernel.trajectory.policy = [];
+            this.customOpts.trajectory.data = cell(0);
+            this.customOpts.trajectory.policy = [];
             
             while ~optimizationFinished(this, iteration)
                 % Perform feval
                 this = performFcnEval(this);
                 
-%                 this.customKernel.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data;
-%                 this.customKernel.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
+                this.customOpts.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data(1,:);
+                this.customOpts.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
                 
-                if this.MinObjective == this.ObjectiveTrace(end)
-                    visCartPole(this.PrivUserDataTrace{end,1}.data{1,1}, this.customOpts.bounds);
-                end
+%                 if this.MinObjective == this.ObjectiveTrace(end)
+%                     visCartPole(this.PrivUserDataTrace{end,1}.data{1,1}, this.customOpts.bounds);
+%                 end
                 
                 this = fitModels(this);
                 % Update Objective minimum traces
@@ -3120,7 +3120,11 @@ success = false;
 doublings = 0;
 C = bayesoptim.suppressWarnings();
 
-kernelFcn = @(Xm, Xn, theta) customOpts.covarianceFcn(Xm, Xn, theta, customOpts);
+if isstring(customOpts.covarianceFcn)
+    kernelFcn = customOpts.covarianceFcn;
+else
+    kernelFcn = @(Xm, Xn, theta) customOpts.covarianceFcn(Xm, Xn, theta, customOpts);
+end
 
 for i=1:size(varargin,2)
     if strcmp('KernelParameters', varargin{i})
@@ -3134,7 +3138,6 @@ varargin{end+1} = 'KernelParameters';
 varargin{end+1} = kParams;
 varargin{end+1} = 'KernelFunction';
 varargin{end+1} = kernelFcn;
-%varargin{end+1} = 'squaredexponential';
 
 while ~success && doublings <= 10
     try

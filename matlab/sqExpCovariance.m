@@ -4,11 +4,11 @@ function covMatrix = sqExpCovariance(Xi, Xj, theta, ~)
     if isempty(Xi)
         Xi = Xj;
     end
-    covMatrix = zeros(size(Xi,1), size(Xj,1));
-    for i=1:size(Xi,1)
-        for j=1:size(Xj,1)
+    for i=size(Xi,1):-1:1
+        for j=size(Xj,1):-1:1
             r = Xi(i,:) - Xj(j,:);
-            covMatrix(i,j) = hyper.f ^ 2 * exp( -(r*r') / (2 * hyper.l ^ 2));
+            d(i,j) = r*r';            
         end
     end
+    covMatrix = hyper.f ^ 2 .* exp( d ./ -(2 * hyper.l ^ 2));
 end

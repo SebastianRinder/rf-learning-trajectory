@@ -1,6 +1,6 @@
-function K = trajectoryCovariance(Xm, Xn, theta, customKernel)
+function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
 
-    trajectory = customKernel.trajectory;
+    trajectory = customOpts.trajectory;
     
     if ~isstruct(theta)
         hyper.l = theta(1);
@@ -36,7 +36,7 @@ function K = trajectoryCovariance(Xm, Xn, theta, customKernel)
                 trajj = trajectory.data(tj,:);
             end
 
-            D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, customKernel);
+            D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, customOpts);
         end
     end
     

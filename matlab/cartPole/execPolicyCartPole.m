@@ -1,5 +1,6 @@
 function [eta, traj] = execPolicyCartPole(policy, opts)
     cumReward = 0;
+    opts.state0.angle = min(max(randn * 0.01, -0.01), 0.01); %at least ~0.6 degree deviation from vertical
     state = opts.state0;    
     traj = cell(opts.timeSteps,1);
     

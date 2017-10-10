@@ -3,7 +3,7 @@ function ret = mainCartPole()
     addpath('../fromMatlab');
     
     dim = 4;
-    trials = 1;
+    trials = 5;
     bayOptSteps = 200;
     ub = 1.*ones(1,dim);
     lb = -1.*ub;
@@ -28,19 +28,21 @@ function ret = mainCartPole()
     opts.state0.position = 0;
     opts.state0.velocity = 0;
     opts.state0.acceleration = 0;
-    opts.state0.angle = 0;
+    %opts.state0.angle = 0;
     opts.state0.angularVelocity = 0;
     
     opts.timeSteps = 1000;
     
     opts.execPolicyFcn = @execPolicyCartPole;
     opts.actionSelectionFcn = @actionSelectionCartPoleConti;
-    opts.covarianceFcn = @sqExpCovariance;
+    %opts.covarianceFcn = 'squaredexponential';
+    %opts.covarianceFcn = @sqExpCovariance;
+    opts.covarianceFcn = @trajectoryCovariance;
     opts.trajectoriesPerPolicy = trajectoriesPerPolicy;
     
-    %customKernel.covarianceFcn = @trajectoryCovariance;
+    global errorRatio;    
     
-    if ~useMatlabBayes
+    if ~useMatlabBayes        
         ret = cell(trials,1);
         for trial = 1:trials            
             policy = zeros(bayOptSteps + initialPolicies, dim);
@@ -101,18 +103,38 @@ function ret = mainCartPole()
             end
         end
     else
-        for i=1:dim
-            policy(1,i) = optimizableVariable(['policy',int2str(i)], [lb(1,i) ub(1,i)]);
-        end
-        close all;
-        tic;
         
-        ret = customBayesopt(@negObjectiveFcn, policy, opts,...
-            'IsObjectiveDeterministic',isDeterministic,...
-            'AcquisitionFunctionName','expected-improvement',...
-            'MaxObjectiveEvaluations',bayOptSteps,...
-            'NumSeedPoints',initialPolicies);
-        toc;
+        ret = zeros(trials,3);
+        for trial=1:trials
+            errorRatio = [];
+            close all;
+            
+            for i=1:dim
+                policy(1,i) = optimizableVariable(['policy',int2str(i)], [lb(1,i) ub(1,i)]);
+            end 
+            
+            tic;
+            tempRet = customBayesopt(@negObjectiveFcn, policy, opts,...
+                'IsObjectiveDeterministic',isDeterministic,...
+                'AcquisitionFunctionName','expected-improvement',...
+                'MaxObjectiveEvaluations',bayOptSteps,...
+                'NumSeedPoints',initialPolicies);
+            toc;
+            disp(['minutes: ', num2str(toc/60)]);
+
+            bestIter = find(tempRet.MinObjective == tempRet.ObjectiveTrace);
+            
+            ret(trial,1) = mean(errorRatio);
+            ret(trial,2) = toc/60;
+            ret(trial,3) = tempRet.MinObjective;
+            ret(trial,4) = bestIter(1);
+            
+%             ret{trial,1}.minutes = toc/60;
+%             ret{trial,1}.MinObjective = tempRet.MinObjective;
+%             ret{trial,1}.bestIter = bestIter(1);
+            
+            save('ret.mat','ret');
+        end
     end
 end
 

@@ -1,36 +1,35 @@
-function D = trajectoryDistance(xi, xj, traji, trajj, customKernel)    
+function D = trajectoryDistance(xi, xj, traji, trajj, customOpts)    
     
     if isempty(traji) && isempty(trajj)
-        execPolicyFcn = customKernel.simOpts.execPolicyFcn;
-        simOpts = customKernel.simOpts;
-        trajectoriesPerPolicy = customKernel.trajectoriesPerPolicy; 
+        execPolicyFcn = customOpts.execPolicyFcn;
+        trajectoriesPerPolicy = customOpts.trajectoriesPerPolicy; 
         
         for n = trajectoriesPerPolicy:-1:1
-            [~, traji{1,n}] = execPolicyFcn(xi, simOpts);
+            [~, traji{1,n}] = execPolicyFcn(xi, customOpts);
         end
         
         for n = trajectoriesPerPolicy:-1:1
-            [~, trajj{1,n}] = execPolicyFcn(xj, simOpts);
+            [~, trajj{1,n}] = execPolicyFcn(xj, customOpts);
         end
-        D = monteCarloEst(xi, xj, traji, trajj, customKernel);
+        D = monteCarloEst(xi, xj, traji, trajj, customOpts);
         if D ~= 0
             keyboard;
         end
     elseif isempty(traji) && ~isempty(trajj)
-        D = importanceSampling(xi, xj, trajj, customKernel);
+        D = importanceSampling(xi, xj, trajj, customOpts);
         
     elseif ~isempty(traji) && isempty(trajj)
-        D = importanceSampling(xi, xj, traji, customKernel); 
+        D = importanceSampling(xi, xj, traji, customOpts); 
         
     elseif ~isempty(traji) && ~isempty(trajj)
-        D = monteCarloEst(xi, xj, traji, trajj, customKernel);
+        D = monteCarloEst(xi, xj, traji, trajj, customOpts);
         
     end
 end
 
-function D = importanceSampling(xi, xj, knownTrajectory, customKernel)
-    trajectoriesPerPolicy = customKernel.trajectoriesPerPolicy;
-    actionSelectionFcn = customKernel.actionSelectionFcn;
+function D = importanceSampling(xi, xj, knownTrajectory, customOpts)
+    trajectoriesPerPolicy = customOpts.trajectoriesPerPolicy;
+    actionSelectionFcn = customOpts.actionSelectionFcn;
     
     Dtemp1 = 1;
     Dtemp2 = 0;
@@ -56,9 +55,9 @@ function D = importanceSampling(xi, xj, knownTrajectory, customKernel)
     D = D / trajectoriesPerPolicy;
 end
 
-function D = monteCarloEst(xi, xj, traji, trajj, customKernel)
-    trajectoriesPerPolicy = customKernel.trajectoriesPerPolicy;
-    actionSelectionFcn = customKernel.actionSelectionFcn;
+function D = monteCarloEst(xi, xj, traji, trajj, customOpts)
+    trajectoriesPerPolicy = customOpts.trajectoriesPerPolicy;
+    actionSelectionFcn = customOpts.actionSelectionFcn;
     
     Dtemp = 0;
     D1 = 0;
