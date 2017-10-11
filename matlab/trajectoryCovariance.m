@@ -44,12 +44,13 @@ function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
 end
 
 function K = scale(D, hyper)
-%     m = max(max(D));
-%     if m == 0
-%         K = hyper.f .* ones(size(D));
-%     else
-%         hyper.l = 10/m;
-%         K = hyper.f .* exp(-hyper.l .* D);
-%     end
-    K = hyper.f .* exp(-hyper.l .* D);
+    m = max(max(D));
+    hyper.f = 1;
+    if m == 0
+        K = hyper.f .* ones(size(D));
+    else
+        hyper.l = 10/m;
+        K = hyper.f .* exp(-hyper.l .* D);
+    end
+%     K = hyper.f .* exp(-hyper.l .* D);
 end
