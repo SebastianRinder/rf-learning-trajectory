@@ -3150,6 +3150,9 @@ while ~success && doublings <= 10
         doublings = doublings + 1;
     end
 end
+if doublings == 11
+    keyboard;
+end
 end
 
 function s = iGetSigmaF(GPR)

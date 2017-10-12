@@ -20,6 +20,7 @@ function D = trajectoryDistance(xi, xj, traji, trajj, customOpts)
         else
             keyboard;
         end
+        keyboard;
     elseif isempty(traji) && ~isempty(trajj)
         D = importanceSampling(xi, trajj, customOpts);
         
@@ -45,15 +46,20 @@ function D = importanceSampling(xNew, knownTrajectory, customOpts)
     for k = 1:trajectoriesPerPolicy
         traj = knownTrajectory{1,k};
 
-        for t=1:length(traj.action)
-            state = traj.state(t,:);
-            action = traj.action(t,:);
-            [~,quadNew] = actionSelectionFcn(xNew, state, action);
-            %[~,quadj] = actionSelectionFcn(xj, state, action);
-            Dtemp1 = Dtemp1 * exp(quadNew - traj.probs(t));
-            Dtemp2 = Dtemp2 + quadNew - traj.probs(t);
-            Dtemp3 = Dtemp3 + traj.probs(t) - quadNew;
-        end
+%         for t=1:length(traj.action)
+%             state = traj.state(t,:);
+%             action = traj.action(t,:);
+%             [~,quadNew] = actionSelectionFcn(xNew, state, action);
+%             %[~,quadj] = actionSelectionFcn(xj, state, action);
+%             Dtemp1 = Dtemp1 * exp(quadNew - traj.probs(t));
+%             Dtemp2 = Dtemp2 + quadNew - traj.probs(t);
+%             Dtemp3 = Dtemp3 + traj.probs(t) - quadNew;
+%         end
+        
+        [~,quadNew] = actionSelectionFcn(xNew, traj.state, traj.action);
+        Dtemp1 = prod(exp(quadNew - traj.prob));
+        Dtemp2 = sum(quadNew - traj.prob);
+        Dtemp3 = sum(traj.prob - quadNew);
 
         D = D + (Dtemp1 * Dtemp2 + Dtemp3) ./ length(traj);
     end
