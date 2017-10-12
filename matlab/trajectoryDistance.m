@@ -21,11 +21,11 @@ function D = trajectoryDistance(xi, xj, traji, trajj, customOpts)
             keyboard;
         end
     elseif isempty(traji) && ~isempty(trajj)
-        D = importanceSampling(xi, xj, trajj, customOpts);
+        D = importanceSampling(xi, trajj, customOpts);
         
     elseif ~isempty(traji) && isempty(trajj)
         keyboard;
-        D = importanceSampling(xi, xj, traji, customOpts); 
+        D = importanceSampling(xj, traji, customOpts); 
         
     elseif ~isempty(traji) && ~isempty(trajj)
         D = monteCarloEst(xi, xj, traji, trajj, customOpts);
@@ -33,7 +33,7 @@ function D = trajectoryDistance(xi, xj, traji, trajj, customOpts)
     end
 end
 
-function D = importanceSampling(xi, xj, knownTrajectory, customOpts)
+function D = importanceSampling(xNew, knownTrajectory, customOpts)
     trajectoriesPerPolicy = customOpts.trajectoriesPerPolicy;
     actionSelectionFcn = customOpts.actionSelectionFcn;
     
@@ -45,14 +45,14 @@ function D = importanceSampling(xi, xj, knownTrajectory, customOpts)
     for k = 1:trajectoriesPerPolicy
         traj = knownTrajectory{1,k};
 
-        for t=1:length(traj)
-            state = traj{t}.state;
-            action = traj{t}.action;
-            [~,quadNew] = actionSelectionFcn(xi, state, action);
-            [~,quadj] = actionSelectionFcn(xj, state, action);
-            Dtemp1 = Dtemp1 * exp(quadNew - quadj);
-            Dtemp2 = Dtemp2 + quadNew - quadj;
-            Dtemp3 = Dtemp3 + quadj - quadNew;
+        for t=1:length(traj.action)
+            state = traj.state(t,:);
+            action = traj.action(t,:);
+            [~,quadNew] = actionSelectionFcn(xNew, state, action);
+            %[~,quadj] = actionSelectionFcn(xj, state, action);
+            Dtemp1 = Dtemp1 * exp(quadNew - traj.probs(t));
+            Dtemp2 = Dtemp2 + quadNew - traj.probs(t);
+            Dtemp3 = Dtemp3 + traj.probs(t) - quadNew;
         end
 
         D = D + (Dtemp1 * Dtemp2 + Dtemp3) ./ length(traj);
@@ -71,15 +71,16 @@ function D = monteCarloEst(xi, xj, traji, trajj, customOpts)
     for k = 1:trajectoriesPerPolicy
         traj = traji{1,k};
 
-        for t=1:length(traj)
-            state = traj{t}.state;
-            action = traj{t}.action;
-            [~,quadi] = actionSelectionFcn(xi, state, action);
-            [~,quadj] = actionSelectionFcn(xj, state, action);
-            Dtemp = Dtemp + quadi - quadj;
-        end
-        
-        D1 = D1 + Dtemp ./ length(traj);
+%         for t=1:length(traj.action)
+%             state = traj.state(t,:);
+%             action = traj.action(t,:);
+%             %[~,quadi] = actionSelectionFcn(xi, state, action);
+%             [~,quadj] = actionSelectionFcn(xj, state, action);
+%             Dtemp = Dtemp + traj.prob(t) - quadj;
+%         end
+
+        [~,quadj] = actionSelectionFcn(xj, traj.state, traj.action);
+        D1 = D1 + sum(traj.prob - quadj) ./ length(traj.action);
     end
     
     Dtemp = 0;
@@ -88,15 +89,16 @@ function D = monteCarloEst(xi, xj, traji, trajj, customOpts)
     for k = 1:trajectoriesPerPolicy
         traj = trajj{1,k};
 
-        for t=1:length(traj)
-            state = traj{t}.state;
-            action = traj{t}.action;
-            [~,quadi] = actionSelectionFcn(xi, state, action);
-            [~,quadj] = actionSelectionFcn(xj, state, action);
-            Dtemp = Dtemp + quadj - quadi;
-        end
-        
-        D2 = D2 + Dtemp ./ length(traj);
+%         for t=1:length(traj.action)
+%             state = traj.state(t,:);
+%             action = traj.action(t,:);
+%             [~,quadi] = actionSelectionFcn(xi, state, action);
+%             %[~,quadj] = actionSelectionFcn(xj, state, action);
+%             Dtemp = Dtemp + traj.prob(t) - quadi;
+%         end
+
+        [~,quadi] = actionSelectionFcn(xi, traj.state, traj.action);
+        D2 = D2 + sum(traj.prob - quadi) ./ length(traj.action);
     end
 
     D = (D1 + D2) / trajectoriesPerPolicy;

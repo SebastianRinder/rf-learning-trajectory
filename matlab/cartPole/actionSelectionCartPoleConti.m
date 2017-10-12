@@ -1,4 +1,4 @@
-function [aNext, quadTerm] = actionSelectionCartPoleConti(policy, state, action)
+function [aNext, quad] = actionSelectionCartPoleConti(policy, state, action)
     aNext = [];
     error = 1e-3;
     
@@ -7,19 +7,23 @@ function [aNext, quadTerm] = actionSelectionCartPoleConti(policy, state, action)
     %acceleration
     %angle
     %angularVelocity
-    feature = state(2:5);
-
-    mu = policy * feature';
+    
     
 %     global errorRatio;
 %     errorRatio = [errorRatio; abs(error/mu)];
+
+    feature = state(:,2:5);
+    mu = feature * policy';
     
     if isempty(action)
+        
         noise = randn * error;        
         aNext = mu + noise;
-        quadTerm = (-(aNext - mu)^2) / (2*error^2);
+        quad = (-(aNext - mu)^2) / (2*error^2);
     else
-        quadTerm = (-(action - mu)^2) / (2*error^2);
+        
+        
+        quad = (-(action - mu).^2) ./ (2*error^2);
     end
 end
 
