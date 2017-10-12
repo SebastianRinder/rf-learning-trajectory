@@ -1844,6 +1844,8 @@ classdef customBayesianOptimization
                 % Perform feval
                 this = performFcnEval(this);
                 
+                %this.customOpts.trajectory = this.PrivUserDataTrace;
+                
                 this.customOpts.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data(1,:);
                 this.customOpts.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
                 

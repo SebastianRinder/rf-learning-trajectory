@@ -1,8 +1,13 @@
 function [sNext, reward, finished] = simCartPole(state, action, bounds)
-    x          = state.position;
-    x_dot      = state.velocity;
-    omega      = state.angle;
-    omega_dot  = state.angularVelocity;
+    %position
+    %velocity
+    %acceleration
+    %angle
+    %angularVelocity
+    x          = state(1);
+    x_dot      = state(2);
+    omega      = state(4);
+    omega_dot  = state(5);
 
     g               = 9.8;      %Gravity
     Mass_Cart       = 1.0;      %Mass of the cart is assumed to be 1Kg
@@ -30,11 +35,11 @@ function [sNext, reward, finished] = simCartPole(state, action, bounds)
     omega     = omega + Tau * omega_dot;
     omega_dot = omega_dot+Tau*omegaacc;
 
-    sNext.position = x;
-    sNext.velocity = x_dot;
-    sNext.acceleration = xacc;
-    sNext.angle = omega;
-    sNext.angularVelocity = omega_dot;
+    sNext(1) = x;
+    sNext(2) = x_dot;
+    sNext(3) = xacc;
+    sNext(4) = omega;
+    sNext(5) = omega_dot;
     
     reward = 1;
     if outBounds(x, bounds.rewardPosition)

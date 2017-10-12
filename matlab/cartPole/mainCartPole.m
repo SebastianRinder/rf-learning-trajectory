@@ -8,7 +8,7 @@ function ret = mainCartPole()
     ub = 1.*ones(1,dim);
     lb = -1.*ub;
     isDeterministic = 0;    
-    trajectoriesPerPolicy = 1;
+    trajectoriesPerPolicy = 3;
     initialPolicies = 4;
     
     useMatlabBayes = 1;
@@ -24,12 +24,13 @@ function ret = mainCartPole()
     opts.bounds.rewardPosition = [-1, 1];
     opts.bounds.rewardAngle = [-12 * pi / 180, 12 * pi / 180];
     %opts.bounds.action = [-1,1]; %force applied to the cart
-        
-    opts.state0.position = 0;
-    opts.state0.velocity = 0;
-    opts.state0.acceleration = 0;
-    %opts.state0.angle = 0;
-    opts.state0.angularVelocity = 0;
+    
+    %position
+    %velocity
+    %acceleration
+    %angle
+    %angularVelocity    
+    opts.state0 = zeros(1,5);
     
     opts.timeSteps = 1000;
     

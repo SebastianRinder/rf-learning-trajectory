@@ -1,13 +1,28 @@
-function [eta, traj] = execPolicyCartPole(policy, opts)
-    cumReward = 0;
-    opts.state0.angle = min(max(randn * 0.01, -0.01), 0.01); %at least ~0.6 degree deviation from vertical
+function [finalReward, traj] = execPolicyCartPole(policy, opts)
+    traj.state = zeros(opts.timeSteps,5);
+    traj.action = zeros(opts.timeSteps,1);
+    traj.prob = zeros(opts.timeSteps,1);
+    traj.cumReward = zeros(opts.timeSteps,1);
+    
+    cumReward = 0;    
+    
+    %position
+    %velocity
+    %acceleration
+    %angle
+    %angularVelocity
+    angle = randn * 0.01;
+    s = sign(angle);
+    if s == 0
+        s = 1;
+    end
+    opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
     state = opts.state0;    
-    traj = cell(opts.timeSteps,1);
     
     %policy = reshape(policy, [size(policy,2)/2, 2])';
     
     for i=1:opts.timeSteps
-        [action, probs] = opts.actionSelectionFcn(policy,state,[]);
+        [action, prob] = opts.actionSelectionFcn(policy,state,[]);
         [nextState, reward, finished] = simCartPole(state, action, opts.bounds);
         
         if i==opts.timeSteps
@@ -16,16 +31,20 @@ function [eta, traj] = execPolicyCartPole(policy, opts)
             end
         end
         cumReward = cumReward + reward;
-        traj{i,1}.state = state;
-        traj{i,1}.action = action;
-        traj{i,1}.probs = probs;
-        traj{i,1}.cumReward = cumReward;        
+        traj.state(i,:) = state;
+        traj.action(i) = action;
+        traj.prob(i) = prob;
+        traj.cumReward(i) = cumReward;
         
         if finished
-            traj(i+1:end,:) = [];
+            traj.state(i+1:end,:) = [];
+            traj.action(i+1:end,:) = [];
+            traj.prob(i+1:end,:) = [];
+            traj.cumReward(i+1:end,:) = [];
             break;
         end
         state = nextState;
     end
-    eta = cumReward / opts.timeSteps;
+    
+    finalReward = cumReward / opts.timeSteps;
 end
