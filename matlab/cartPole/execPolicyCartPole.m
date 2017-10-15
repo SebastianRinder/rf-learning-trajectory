@@ -13,9 +13,7 @@ function [finalReward, traj] = execPolicyCartPole(policy, opts)
     %angularVelocity
     angle = randn * 0.01;
     s = sign(angle);
-    if s == 0
-        s = 1;
-    end
+    if s == 0, s = 1; end
     opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
     state = opts.state0;    
     

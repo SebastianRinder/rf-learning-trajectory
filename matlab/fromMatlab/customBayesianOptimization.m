@@ -3122,7 +3122,7 @@ success = false;
 doublings = 0;
 C = bayesoptim.suppressWarnings();
 
-if isstring(customOpts.covarianceFcn)
+if ischar(customOpts.covarianceFcn)
     kernelFcn = customOpts.covarianceFcn;
 else
     kernelFcn = @(Xm, Xn, theta) customOpts.covarianceFcn(Xm, Xn, theta, customOpts);
@@ -3140,6 +3140,8 @@ varargin{end+1} = 'KernelParameters';
 varargin{end+1} = kParams;
 varargin{end+1} = 'KernelFunction';
 varargin{end+1} = kernelFcn;
+% varargin{end+1} = 'Standardize';
+% varargin{end+1} = true;
 
 while ~success && doublings <= 10
     try
@@ -3150,8 +3152,8 @@ while ~success && doublings <= 10
         doublings = doublings + 1;
     end
 end
-if doublings == 11
-    keyboard;
+if ~success
+    xxx = 1;
 end
 end
 

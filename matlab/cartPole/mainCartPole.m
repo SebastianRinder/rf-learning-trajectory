@@ -37,9 +37,13 @@ function ret = mainCartPole()
     opts.execPolicyFcn = @execPolicyCartPole;
     opts.actionSelectionFcn = @actionSelectionCartPoleConti;
     %opts.covarianceFcn = 'squaredexponential';
-    %opts.covarianceFcn = @sqExpCovariance;
-    opts.covarianceFcn = @trajectoryCovariance;
+    opts.covarianceFcn = @sqExpCovariance;
+    %opts.covarianceFcn = @trajectoryCovariance;
     opts.trajectoriesPerPolicy = trajectoriesPerPolicy;
+    
+    if ~isequal(opts.covarianceFcn, @trajectoryCovariance)
+        trajectoriesPerPolicy = 1;
+    end
     
     global errorRatio;    
     

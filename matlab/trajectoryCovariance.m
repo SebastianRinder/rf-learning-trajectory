@@ -1,7 +1,4 @@
 function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
-
-    trajectory = customOpts.trajectory;
-    
     if ~isstruct(theta)
         hyper.l = theta(1);
         hyper.f = theta(2);
@@ -13,33 +10,31 @@ function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
     n = size(Xn,1);
     
     D = zeros(m,n);    
+    
+    prior = false;
+    if m == n && all(all(Xm == Xn))
+        prior = true;
+    end
+    
     for i = 1:m
-        for j = 1:n
-            
+        start = 1;
+        if prior
+            start = i;
+        end
+        for j = start:n
             if all(Xm(i,:) == Xn(j,:))
                 D(i,j) = 0;
             else
-                ti = find(all(Xm(i,:) == trajectory.policy, 2));
-                if isempty(ti)
-                    traji = [];
-                else
-                    traji = trajectory.data(ti,:);
-                end
-                
-                traji = find(Xm(i,:), trajectory);
-                trajj = find(Xn(j,:), trajectory);
-
-                tj = find(all(Xn(j,:) == trajectory.policy, 2));
-                if isempty(tj)
-                    trajj = [];
-                else
-                    trajj = trajectory.data(tj,:);
-                end
+                traji = findTraj(Xm(i,:), customOpts.trajectory);
+                trajj = findTraj(Xn(j,:), customOpts.trajectory);
                 D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, customOpts);
-            end            
+            end
         end
     end
     
+    if prior
+        D = D + D';
+    end    
     K = scale(D, hyper);
 end
 
@@ -52,16 +47,18 @@ function traj = findTraj(X, trajectory)
     end
 end
 
-%85 iters, 11705s, best at 38, best -0.149
-
 function K = scale(D, hyper)
-%     m = max(max(D));
-%     hyper.f = 1;
-%     if m == 0
-%         K = hyper.f .* ones(size(D));
-%     else
-%         hyper.l = 10/m;
-%         K = hyper.f .* exp(-hyper.l .* D);
-%     end
-    K = hyper.f .* exp(-hyper.l .* D);
+    hyper.f = 1;
+
+    if max(max(D)) == 0
+        K = hyper.f .* ones(size(D));
+    else
+        m = min(min(D(D~=0)));
+        if m >= 10
+            hyper.l = 0.1/m;
+        else
+            hyper.l = 1;
+        end
+        K = hyper.f .* exp(-hyper.l .* D);
+    end
 end
