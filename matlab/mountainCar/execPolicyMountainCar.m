@@ -1,11 +1,14 @@
-function [eta, traj] = execPolicyMountainCar(theta, state0, episodes, worldBounds)
-    cumReward = 0;
-    state = state0;
+function [finalReward, traj] = execPolicyMountainCar(policy, opts)
+    traj.state = zeros(opts.timeSteps,5);
+    traj.action = zeros(opts.timeSteps,1);
+    traj.prob = zeros(opts.timeSteps,1);
+    traj.cumReward = zeros(opts.timeSteps,1);
     
-    traj = cell(episodes,1);
-
-    for i=1:episodes 
-        action = actionSelectionMountainCar(theta, state, []);
+    cumReward = 0;
+    state = opts.state0;
+    
+    for i=1:opts.timeSteps 
+        [action, prob] = opts.actionSelectionFcn(policy, state, []);
         [nextState, reward, finished] = simMountainCar(state, action, worldBounds);
    
         cumReward = cumReward + reward;
@@ -19,5 +22,5 @@ function [eta, traj] = execPolicyMountainCar(theta, state0, episodes, worldBound
         end
         state = nextState;
     end
-    eta = cumReward;% / episodes;
+    finalReward = cumReward;% / episodes;
 end

@@ -1,5 +1,4 @@
-function [aNext, quad] = actionSelectionCartPoleConti(policy, state, action)
-    aNext = [];
+function [aNext, quad] = actionSelectionCartPole(policy, state, action)
     error = 1e-4;
     %error = 1e-4; %squared Exp -> errorRatio is ~5%
     
@@ -20,6 +19,7 @@ function [aNext, quad] = actionSelectionCartPoleConti(policy, state, action)
         quad = (-(aNext - mu).^2) ./ (2.*error.^2);
         
     else
+        aNext = [];
         quad = (-(action - mu).^2) ./ (2.*error.^2);
         
     end

@@ -1,29 +1,22 @@
-function [aNext, P] = actionSelectionMountainCar(theta, state, action)
+function [aNext, prob] = actionSelectionMountainCar(policy, state, action)
     actionList = [-1,1];       %apply acceleration to the rear or forward
     
-    theta = reshape(theta, [size(theta,2)/size(actionList,2), size(actionList,2)])';
+    pos = state(:,1);
+    vel = state(:,2);
+    feature = [pos, pos.^2, pos.^3, vel, vel.^2, vel.^3, pos.*vel, pos.*vel.^2, pos.^2.*vel]; 
     
-    p = state.position;
-    v = state.velocity;
-    feature = [p; p^2; p^3; v; v^2; v^3; p*v; p*v^2; p^2*v]; 
-       
-    sumP = 0;
-    probs = zeros(size(actionList,2),1);
-    for i=1:size(actionList,2)
-        probs(i,1) = exp(theta(i,:) * feature);
-        sumP = sumP + probs(i,1);
-    end
+    policy = reshape(policy, [size(policy,2)/size(actionList,2), size(actionList,2)])';
     
-    %normalize
-    for i=1:size(actionList,2)
-        probs(i,1) = probs(i,1) / sumP;
-    end
-
-    %select action according to probabilities
-    aNext = actionList(1+sum(rand>cumsum(probs)));
-
-    %probability for given action
-    if ~isempty(action)
-        P = probs(actionList == action);
+    P = exp(feature * policy');
+    P = P ./ sum(P,2);
+    
+    if isempty(action)        
+        aNext = actionList(1 + sum(rand > cumsum(P)));
+        prob = P(actionList == aNext);
+        
+    else
+        aNext = [];
+        prob = sum((actionList == action) .* P, 2);
+        
     end
 end
