@@ -1,9 +1,9 @@
-function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
+function Kmn = trajectoryCovariance(Xm, Xn, theta, customOpts)
     if ~isstruct(theta)
-        hyper.l = theta(1);
-        hyper.f = theta(2);
+        hyper.l = max(theta(1), 1e-6);
+        hyper.f = max(theta(2), 1e-6);
     else
-        hyper = theta;
+%         hyper = theta;
     end
 
     m = size(Xm,1);
@@ -35,7 +35,7 @@ function K = trajectoryCovariance(Xm, Xn, theta, customOpts)
     if prior
         D = D + D';
     end    
-    K = scale(D, hyper);
+    Kmn = scale(D, hyper);
 end
 
 function traj = findTraj(X, trajectory)
@@ -47,18 +47,25 @@ function traj = findTraj(X, trajectory)
     end
 end
 
-function K = scale(D, hyper)
-    hyper.f = 1;
+function Kmn = scale(D, hyper)
+%     hyper.f = 1;
 
     if max(max(D)) == 0
-        K = hyper.f .* ones(size(D));
+        Kmn = hyper.f .* ones(size(D));
     else
-        m = min(min(D(D~=0)));
-        if m >= 10
-            hyper.l = 0.1/m;
-        else
-            hyper.l = 1;
-        end
-        K = hyper.f .* exp(-hyper.l .* D);
+%         m = min(min(D(D~=0)));
+%         if m >= 10
+%             hyper.l = 0.1/m;
+%         else
+%             hyper.l = 1;
+%         end
+        m = 16 / max(max(D));
+        d = m * D;
+        
+%         m = e^16 / max(max(D));
+%         d = log(m*D);
+        
+        Kmn = d ./ (hyper.l^2);
+        Kmn = (hyper.f^2) * exp(-0.5*Kmn);
     end
 end

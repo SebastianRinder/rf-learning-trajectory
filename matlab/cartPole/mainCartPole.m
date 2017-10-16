@@ -4,7 +4,7 @@ function ret = mainCartPole()
     
     dim = 4;
     trials = 5;
-    bayOptSteps = 200;
+    bayOptSteps = 250;
     ub = 1.*ones(1,dim);
     lb = -1.*ub;
     isDeterministic = 0;    
@@ -37,8 +37,8 @@ function ret = mainCartPole()
     opts.execPolicyFcn = @execPolicyCartPole;
     opts.actionSelectionFcn = @actionSelectionCartPoleConti;
     %opts.covarianceFcn = 'squaredexponential';
-    opts.covarianceFcn = @sqExpCovariance;
-    %opts.covarianceFcn = @trajectoryCovariance;
+    %opts.covarianceFcn = @sqExpCovariance;
+    opts.covarianceFcn = @trajectoryCovariance;
     opts.trajectoriesPerPolicy = trajectoriesPerPolicy;
     
     if ~isequal(opts.covarianceFcn, @trajectoryCovariance)
@@ -109,7 +109,7 @@ function ret = mainCartPole()
         end
     else
         
-        ret = zeros(trials,3);
+        ret = zeros(trials,4);
         for trial=1:trials
             errorRatio = [];
             close all;
