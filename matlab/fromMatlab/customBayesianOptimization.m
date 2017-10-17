@@ -3143,7 +3143,7 @@ varargin{end+1} = kernelFcn;
 % varargin{end+1} = 'Standardize';
 % varargin{end+1} = true;
 
-while ~success && doublings <= 10
+while ~success && doublings <= 20
     try
         GP = compact(fitrgp(X, Y, varargin{:}, 'SigmaLowerBound', SigmaLowerBound));
         success = true;
