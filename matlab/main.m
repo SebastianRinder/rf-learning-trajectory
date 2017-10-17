@@ -6,13 +6,13 @@ function ret = main()
     trials = 5;
     bayOptSteps = 250;
     
-    initialPolicies = 40;
+    initialPolicies = 10;
     isDeterministic = 0;
-    useMatlabBayes = 1;
-    useMatlabGP = 1;    
+    useMatlabBayes = 0;
+    useMatlabGP = 0;    
     optimizeNoiseHyper = 0;
     acqFcn = @expectedImprovement;
-    opts.trajectoriesPerPolicy = 10;
+    opts.trajectoriesPerPolicy = 5;
         
     %opts.covarianceFcn = 'squaredexponential';
     %opts.covarianceFcn = @sqExpCovariance;
@@ -52,48 +52,41 @@ function ret = main()
     if ~useMatlabBayes        
         ret = cell(trials,1);
         for trial = 1:trials            
-            policy = zeros(bayOptSteps + initialPolicies, dim);
-            negObjective = zeros(bayOptSteps + initialPolicies, 1);
-            tempObjective = zeros(1, trajectoriesPerPolicy);
-            trajectory = cell(bayOptSteps + initialPolicies, trajectoriesPerPolicy);
-            %hypers = zeros(bayOptSteps + initialPolicies, 6);
+            opts.trajectory.data = cell(0);
+            opts.trajectory.policy = [];
 
             for i=1:initialPolicies
-                policy(i,:) = randPolicy(lb, ub, 1);
-                for j = 1:trajectoriesPerPolicy
-                    [tempObjective(1,j), trajectory{i,j}] = execPolicyCartPole(policy(i,:), state0, executionTimeSteps, bounds);
+                opts.trajectory.policy(i,:) = randPolicy(lb, ub, 1);
+                for j = 1:opts.trajectoriesPerPolicy
+                    [tempObjective(1,j), opts.trajectory.data{i,j}] = execPolicy(opts.trajectory.policy(i,:), opts);
                 end
                 negObjective(i,1) = -mean(tempObjective);
             end
            
             for i = initialPolicies+1:initialPolicies+bayOptSteps
-                xTrain = policy(1:i-1,:);
-                yTrain = negObjective(1:i-1,:);
+                xTrain = opts.trajectory.policy;
+                yTrain = negObjective;
                 hyper = setHypers(yTrain, lb, ub, isDeterministic);
-                traj = trajectory(1:i-1,:);
-                
-%                 K = covarianceFcn(xTrain, xTrain, hyper, traj, actionSelectionFcn);
-%                 histogram(K);
-                
+                                
                 if useMatlabGP
-                    kernelFcn = @(Xm, Xn, theta) covarianceFcn(Xm, Xn, theta, traj, actionSelectionFcn);
+                    kernelFcn = @(Xm, Xn, theta) opts.covarianceFcn(Xm, Xn, theta, opts);
                     gprMdl = fitGP(xTrain, yTrain, hyper, kernelFcn, optimizeNoiseHyper);
                     meanMdlFcn = @(X) predict(gprMdl, X);
                     [~,minMeanMdl] = globalMin(meanMdlFcn, lb, ub, useMatlabGP);
 
                     negAcqFcn = @(X) -acqFcn(X, gprMdl, minMeanMdl);
-                    policy(i,:) = globalMin(negAcqFcn, lb, ub, useMatlabGP);
+                    opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub, useMatlabGP);
                 else
-                    K = covarianceFcn([], xTrain, hyper, traj);
-                    meanMdlFcn = @(X) gaussianProcess(X, xTrain, yTrain, covarianceFcn, K, hyper, traj);
+                    K = opts.covarianceFcn(xTrain, xTrain, hyper, opts);
+                    meanMdlFcn = @(X) gaussianProcess(X, xTrain, yTrain, opts.covarianceFcn, K, hyper, opts);
                     [~,minMeanMdl] = globalMin(meanMdlFcn, lb, ub, useMatlabGP);
                     
-                    negAcqFcn = @(X) -acquisition(X, xTrain, yTrain, minMeanMdl, covarianceFcn, K, hyper, traj);
-                    policy(i,:) = globalMin(negAcqFcn, lb, ub, useMatlabGP);
+                    negAcqFcn = @(X) -acquisition(X, xTrain, yTrain, minMeanMdl, opts.covarianceFcn, K, hyper, opts);
+                    opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub, useMatlabGP);
                 end
                 
-                for j = 1:trajectoriesPerPolicy
-                    [tempObjective(1,j), trajectory{i,j}] = execPolicyCartPole(policy(i,:), state0, executionTimeSteps, bounds);
+                for j = 1:opts.trajectoriesPerPolicy
+                    [tempObjective(1,j), opts.trajectory.data{i,j}] = execPolicy(opts.trajectory.policy(i,:), opts);
                 end
                 negObjective(i,1) = -mean(tempObjective);
 
@@ -101,10 +94,10 @@ function ret = main()
                     ' | step : ',num2str(i-initialPolicies) ,...
                     ' | negCR: ',num2str(negObjective(i,1))...
                     ]);
-                %visCartPole(traj{i,m},worldBounds);
-                
-                ret{trial,1}.policy = policy;
-                ret{trial,1}.objective = negObjective;
+
+                ret{trial,1}.policy = opts.trajectory.policy;
+                ret{trial,1}.negObjective = negObjective;
+                ret{trial,1}.trajectory = opts.trajectory.data;
 
                 save('ret.mat','ret');
             end
