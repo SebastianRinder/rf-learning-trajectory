@@ -48,13 +48,15 @@ function traj = findTraj(X, trajectory)
 end
 
 function Kmn = scale(D, hyper)
+%     Kmn = exp(-D);
+    
     if max(max(D)) == 0
         Kmn = hyper.f .* ones(size(D));
     else
-        m = 16 / max(max(D));
-        d = m * D;
+%         m = 16 / max(max(D));
+%         d = m * D;
         
-        Kmn = d ./ (hyper.l^2);
+        Kmn = D ./ (hyper.l^2);
         Kmn = (hyper.f^2) * exp(-0.5*Kmn);
     end
 end

@@ -12,8 +12,8 @@ function [sNext, reward, finished] = simMountainCar(state, action, bounds)
     finished = false;
     
     if sNext(1,1) < bounds.position(1) %out of left bound, inelastic wall to the left
-        sNext.position = bounds.position(1);
-        sNext.velocity = 0;
+        sNext(1,1) = bounds.position(1);
+        sNext(1,2) = 0;
     end
     
     if sNext(1,1) < bounds.position(2)

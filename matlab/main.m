@@ -6,13 +6,13 @@ function ret = main()
     trials = 5;
     bayOptSteps = 250;
     
-    initialPolicies = 4;
+    initialPolicies = 40;
     isDeterministic = 0;
     useMatlabBayes = 1;
     useMatlabGP = 1;    
     optimizeNoiseHyper = 0;
     acqFcn = @expectedImprovement;
-    opts.trajectoriesPerPolicy = 3;
+    opts.trajectoriesPerPolicy = 10;
         
     %opts.covarianceFcn = 'squaredexponential';
     %opts.covarianceFcn = @sqExpCovariance;
