@@ -53,13 +53,17 @@ function Kmn = scale(D, hyper)
     %Kmn = exp(-D);
     %compute once per iter
     
-    hyper.l = 1;
+%     hyper.l = 1;
+%     hyper.f = 1;
+%     m = 8.26275e-08;
+%     d = m * D;
+%     
+%     Kmn = d ./ (hyper.l^2);
+%     Kmn = (hyper.f^2) * exp(-0.5*Kmn);
+    global trial;
     hyper.f = 1;
-    m = 8.26275e-08;
-    d = m * D;
-    
-    Kmn = d ./ (hyper.l^2);
-    Kmn = (hyper.f^2) * exp(-0.5*Kmn);
+    %Kmn = hyper.f * exp(-hyper.l * D);
+    Kmn = hyper.f * exp(-(10^(-trial)) * D);
     
 %     if max(max(D)) == 0
 %         Kmn = hyper.f .* ones(size(D));

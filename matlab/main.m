@@ -3,8 +3,8 @@ function ret = main()
     
     global opts;
     
-    trials = 5;
-    bayOptSteps = 250;
+    trials = 10;
+    bayOptSteps = 10;
     
     initialPolicies = 10;
     isDeterministic = 0;
@@ -103,7 +103,7 @@ function ret = main()
             end
         end
     else
-        
+        global trial;
         ret = zeros(trials,4);
         for trial=1:trials
             errorRatio = [];
@@ -124,10 +124,9 @@ function ret = main()
 
             bestIter = find(tempRet.MinObjective == tempRet.ObjectiveTrace);
             
-            ret(trial,1) = mean(errorRatio);
-            ret(trial,2) = toc/60;
-            ret(trial,3) = tempRet.MinObjective;
-            ret(trial,4) = bestIter(1);
+            ret(trial,1) = toc/60;
+            ret(trial,2) = tempRet.MinObjective;
+            ret(trial,3) = bestIter(1);
             
 %             ret{trial,1}.minutes = toc/60;
 %             ret{trial,1}.MinObjective = tempRet.MinObjective;

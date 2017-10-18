@@ -3140,10 +3140,16 @@ varargin{end+1} = 'KernelParameters';
 varargin{end+1} = kParams;
 varargin{end+1} = 'KernelFunction';
 varargin{end+1} = kernelFcn;
+% if size(Y,2) > 3
+%     varargin{end+1} = 'OptimizeHyperparameters';
+%     varargin{end+1} = {'KernelScale'};
+%     varargin{end+1} = 'HyperparameterOptimizationOptions';
+%     varargin{end+1} = struct('ShowPlots',1,'Verbose',1); %, 'UseParallel', 1);
+% end
 % varargin{end+1} = 'Standardize';
 % varargin{end+1} = true;
 
-while ~success && doublings <= 20
+while ~success && doublings <= 10
     try
         GP = compact(fitrgp(X, Y, varargin{:}, 'SigmaLowerBound', SigmaLowerBound));
         success = true;
