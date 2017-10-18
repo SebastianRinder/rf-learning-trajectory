@@ -127,6 +127,7 @@ function ret = main()
             ret(trial,1) = toc/60;
             ret(trial,2) = tempRet.MinObjective;
             ret(trial,3) = bestIter(1);
+            ret(trial,4) = mean(tempRet.ObjectiveTrace);
             
 %             ret{trial,1}.minutes = toc/60;
 %             ret{trial,1}.MinObjective = tempRet.MinObjective;
