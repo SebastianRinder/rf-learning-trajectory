@@ -1,4 +1,4 @@
-function [aNext, quad] = actionSelectionCartPole(policy, state, action)
+function [actionNext, quad] = actionSelectionCartPole(policy, state, action)
     error = 1e-4;
     %error = 1e-4; %squared Exp -> errorRatio is ~5%
     
@@ -9,17 +9,19 @@ function [aNext, quad] = actionSelectionCartPole(policy, state, action)
     %angularVelocity
     feature = state(:,2:5);
     mu = feature * policy';
+    mu(mu > 1) = 1;
+    mu(mu < -1) = -1;
     
 %     global errorRatio;
 %     errorRatio = [errorRatio; abs(error./mu)];
     
     if isempty(action)        
         noise = randn * error;        
-        aNext = mu + noise;
-        quad = (-(aNext - mu).^2) ./ (2.*error.^2);
+        actionNext = mu + noise;
+        quad = (-(actionNext - mu).^2) ./ (2.*error.^2);
         
     else
-        aNext = [];
+        actionNext = [];
         quad = (-(action - mu).^2) ./ (2.*error.^2);
         
     end

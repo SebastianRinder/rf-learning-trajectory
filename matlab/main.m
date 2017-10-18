@@ -8,7 +8,7 @@ function ret = main()
     
     initialPolicies = 10;
     isDeterministic = 0;
-    useMatlabBayes = 0;
+    useMatlabBayes = 1;
     useMatlabGP = 0;    
     optimizeNoiseHyper = 0;
     acqFcn = @expectedImprovement;
@@ -18,8 +18,8 @@ function ret = main()
     %opts.covarianceFcn = @sqExpCovariance;
     opts.covarianceFcn = @trajectoryCovariance;
         
-    %opts.problem = 'cartPole';
-    opts.problem = 'mountainCar';
+    opts.problem = 'cartPole';
+    %opts.problem = 'mountainCar';
     addpath(opts.problem);
     
     if isequal(opts.problem, 'cartPole')
@@ -32,7 +32,7 @@ function ret = main()
         opts.timeSteps = 1000;
     
         %opts.execPolicyFcn = @execPolicyCartPole;
-        opts.actionSelectionFcn = @actionSelectionCartPoleConti;
+        opts.actionSelectionFcn = @actionSelectionCartPole;
         opts.simFcn = @simCartPole;
     elseif isequal(opts.problem, 'mountainCar')
         dim = 18;        
