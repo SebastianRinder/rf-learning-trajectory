@@ -104,7 +104,11 @@ function ret = main()
         end
     else
         global trial;
-        ret = zeros(trials,4);
+        global hypers;
+        hypers = logspace(-8,8,10);
+        [h1,h2] = meshgrid(hypers);
+        hypers = [h1(:),h2(:)];
+        ret = zeros(trials,6);
         for trial=1:trials
             errorRatio = [];
             close all;
@@ -128,7 +132,8 @@ function ret = main()
             ret(trial,2) = tempRet.MinObjective;
             ret(trial,3) = bestIter(1);
             ret(trial,4) = mean(tempRet.ObjectiveTrace);
-            
+            ret(trial,5:6) = hypers(trial,1:2);
+            disp(trial);
 %             ret{trial,1}.minutes = toc/60;
 %             ret{trial,1}.MinObjective = tempRet.MinObjective;
 %             ret{trial,1}.bestIter = bestIter(1);

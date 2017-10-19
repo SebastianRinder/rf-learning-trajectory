@@ -3159,7 +3159,14 @@ while ~success && doublings <= 10
     end
 end
 if ~success
-    xxx = 1;
+    global trial;
+    global hypers;
+    if hypers(trial,1) == 888
+        hypers(trial,2) = hypers(trial,2)+1;
+    else
+        hypers(trial,1) = 888;
+        hypers(trial,2) = 1;
+    end
 end
 end
 
