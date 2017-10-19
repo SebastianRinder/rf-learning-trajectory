@@ -3,7 +3,7 @@ function ret = main()
     
     global opts;
     
-    trials = 10;
+    trials = 6;
     bayOptSteps = 10;
     
     initialPolicies = 10;
@@ -105,9 +105,10 @@ function ret = main()
     else
         global trial;
         global hypers;
-        hypers = logspace(-8,8,10);
-        [h1,h2] = meshgrid(hypers);
-        hypers = [h1(:),h2(:)];
+%         hypers = logspace(-8,8,10);
+%         [h1,h2] = meshgrid(hypers);
+%         hypers = [h1(:),h2(:)];
+        hypers = [1.00000000000000e-08,27825.5940220713;0.129154966501488,7.74263682681128;7.74263682681128,3.59381366380463e-05;27825.5940220713,1.00000000000000e-08;27825.5940220713,100000000;1668100.53720006,3.59381366380463e-05];
         ret = zeros(trials,6);
         for trial=1:trials
             errorRatio = [];
@@ -137,7 +138,9 @@ function ret = main()
 %             ret{trial,1}.minutes = toc/60;
 %             ret{trial,1}.MinObjective = tempRet.MinObjective;
 %             ret{trial,1}.bestIter = bestIter(1);
-            
+            if tempRet.MinObjective < -1
+                visCartPole(tempRet.UserDataTrace{bestIter(1),1},opts.bounds);
+            end
             save('ret.mat','ret');
         end
     end
