@@ -10,8 +10,6 @@ function [aNext, prob] = actionSelectionMountainCar(policy, state, action)
     P = exp(feature * policy');
     P = P ./ sum(P,2);
     
-    %google: logsumexp matlab
-    
     if isempty(action)        
         aNext = actionList(1 + sum(rand > cumsum(P)));
         prob = P(actionList == aNext);
