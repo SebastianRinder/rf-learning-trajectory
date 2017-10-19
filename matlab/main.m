@@ -3,8 +3,8 @@ function ret = main()
     
     global opts;
     
-    trials = 10;
-    bayOptSteps = 10;
+    trials = 1;
+    bayOptSteps = 40;
     
     initialPolicies = 10;
     isDeterministic = 0;
@@ -18,8 +18,8 @@ function ret = main()
     %opts.covarianceFcn = @sqExpCovariance;
     opts.covarianceFcn = @trajectoryCovariance;
         
-    opts.problem = 'cartPole';
-    %opts.problem = 'mountainCar';
+%     opts.problem = 'cartPole';
+    opts.problem = 'mountainCar';
     addpath(opts.problem);
     
     if isequal(opts.problem, 'cartPole')
