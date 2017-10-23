@@ -3,10 +3,8 @@ function ret = main()
     
     global opts;
     
-    trials = 6;
-    bayOptSteps = 10;
-    trials = 1;
-    bayOptSteps = 40;
+    trials = 13*13;
+    bayOptSteps = 20;
     
     initialPolicies = 10;
     isDeterministic = 0;
@@ -20,8 +18,8 @@ function ret = main()
     %opts.covarianceFcn = @sqExpCovariance;
     opts.covarianceFcn = @trajectoryCovariance;
         
-%     opts.problem = 'cartPole';
-    opts.problem = 'mountainCar';
+    opts.problem = 'cartPole';
+    %opts.problem = 'mountainCar';
     addpath(opts.problem);
     
     if isequal(opts.problem, 'cartPole')
@@ -107,12 +105,15 @@ function ret = main()
     else
         global trial;
         global hypers;
-%         hypers = logspace(-8,8,10);
-%         [h1,h2] = meshgrid(hypers);
-%         hypers = [h1(:),h2(:)];
-        hypers = [1.00000000000000e-08,27825.5940220713;0.129154966501488,7.74263682681128;7.74263682681128,3.59381366380463e-05;27825.5940220713,1.00000000000000e-08;27825.5940220713,100000000;1668100.53720006,3.59381366380463e-05];
-        ret = zeros(trials,6);
+        global failz;
+        h1 = logspace(-8,8,13);
+        h2 = logspace(-8,8,13);
+        [h1,h2] = meshgrid(h1,h2);
+        hypers = [h1(:),h2(:)];
+        
+        ret = zeros(trials,7);
         for trial=1:trials
+            failz = 0;
             errorRatio = [];
             close all;
             
@@ -136,14 +137,18 @@ function ret = main()
             ret(trial,3) = bestIter(1);
             ret(trial,4) = mean(tempRet.ObjectiveTrace);
             ret(trial,5:6) = hypers(trial,1:2);
+            ret(trial,7) = failz;
             disp(trial);
+            
+            trajSave(trial,1) = tempRet.UserDataTrace(bestIter(1),1);
+            
 %             ret{trial,1}.minutes = toc/60;
 %             ret{trial,1}.MinObjective = tempRet.MinObjective;
 %             ret{trial,1}.bestIter = bestIter(1);
             if tempRet.MinObjective < -1
-                visCartPole(tempRet.UserDataTrace{bestIter(1),1},opts.bounds);
+%                 visCartPole(tempRet.UserDataTrace{bestIter(1),1},opts.bounds);
             end
-            save('ret.mat','ret');
+            save('ret.mat','ret', 'trajSave');
         end
     end
 end
