@@ -3,4 +3,7 @@
 *.asv
 
 # matlab data files
-###*.mat
+#*.mat
+
+# open office autosave
+*.ods#
