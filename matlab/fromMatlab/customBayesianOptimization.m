@@ -3149,7 +3149,7 @@ varargin{end+1} = kernelFcn;
 % varargin{end+1} = 'Standardize';
 % varargin{end+1} = true;
 
-while ~success && doublings <= 20
+while ~success && doublings <= 10
     try
         GP = compact(fitrgp(X, Y, varargin{:}, 'SigmaLowerBound', SigmaLowerBound));
         success = true;
@@ -3159,14 +3159,8 @@ while ~success && doublings <= 20
     end
 end
 if ~success
-    global trial;
-    global hypers;
-    if hypers(trial,1) == 888
-        hypers(trial,2) = hypers(trial,2)+1;
-    else
-        hypers(trial,1) = 888;
-        hypers(trial,2) = 1;
-    end
+    global failz;
+    failz = failz + 1;
 end
 end
 

@@ -61,8 +61,12 @@ function Kmn = scale(D, hyper)
 %     Kmn = d ./ (hyper.l^2);
 %     Kmn = (hyper.f^2) * exp(-0.5*Kmn);
 
-    hyper.f = 1;
-    hyper.l = 1;
+global hypers;
+global trial;
+hyper.f = hypers(trial,1);
+hyper.l = hypers(trial,1);
+    hyper.f = 1e-6;
+    hyper.l = 1e-1;
     %Kmn = hyper.f * exp(-hyper.l * D);
 %     Kmn = hyper.f * exp(-(10^(-trial)) * D);
     Kmn = hyper.f * exp(-hyper.l*D);
