@@ -6,7 +6,7 @@ function [finalReward, traj] = execPolicy(policy, opts)
     
     cumReward = 0;    
     
-    if isequal(opts.problem, 'cartPole')
+    if isequal(opts.environment, 'cartPole')
         angle = randn * 0.01;
         s = sign(angle);
         if s == 0, s = 1; end
@@ -15,14 +15,10 @@ function [finalReward, traj] = execPolicy(policy, opts)
     state = opts.state0;    
     
     for i=1:opts.timeSteps
-        [action, prob] = opts.actionSelectionFcn(policy,state,[]);
-        [nextState, reward, finished] = opts.simFcn(state, action, opts.bounds);
-        
-        if i==opts.timeSteps
-            if reward == 1
-                reward = opts.timeSteps + 1;
-            end
-        end
+        [action, prob] = opts.actionSelectionFcn(policy, state, [], opts.actionList);
+        nextState = opts.simFcn(state, action, opts.bounds);        
+        [reward, finished] = opts.rewardFcn(nextState, opts.bounds, i==opts.timeSteps);
+
         cumReward = cumReward + reward;
         traj.state(i,:) = state;
         traj.action(i,1) = action;
@@ -39,5 +35,5 @@ function [finalReward, traj] = execPolicy(policy, opts)
         state = nextState;
     end
     
-    finalReward = cumReward / opts.timeSteps;
+    finalReward = cumReward; % / opts.timeSteps;
 end

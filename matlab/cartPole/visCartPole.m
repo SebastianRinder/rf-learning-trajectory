@@ -1,11 +1,5 @@
 function visCartPole(traj, bounds)
-    f = findFigure('Visualize Cart Pole');
-    c = findobj(f, 'type', 'uicontrol', 'style', 'checkbox');
-    if isempty(c)
-        toSkip = 0;
-    else
-        toSkip = get(c, 'Value');
-    end
+    skipVisValue = selectFigure('Visualize Cart Pole');
     clf;
     
     axis equal;
@@ -18,7 +12,7 @@ function visCartPole(traj, bounds)
      
     checkBoxSkip = uicontrol('Style', 'checkbox', 'String', 'Skip Vis',...
         'Position', [360 60 90 20],...
-        'Value', toSkip);
+        'Value', skipVisValue);
     
     lblTime = uicontrol('style','text');
     lblAction = uicontrol('style','text');
@@ -38,15 +32,15 @@ function visCartPole(traj, bounds)
     set(lblAngle,'Position', [180 60 90 20]);
     set(lblAngularVelocity,'Position', [180 30 90 20]);
     
-    T = length(traj);
-    title(['time steps: ', num2str(T), '      final reward: ', num2str(traj{end}.cumReward)]);
+    T = length(traj.action);
+    title(['time steps: ', num2str(T), '      final reward: ', num2str(traj.cumReward(end))]);
     
     for i = 1:T
         if get(checkBoxSkip, 'Value') == 1
             break;
         end
-        x = traj{i}.state.position;
-        omega = traj{i}.state.angle;
+        x = traj.state(i,1);
+        omega = traj.state(i,4);
         
         pxp=[x x+l*sin(omega)];
         pyp=[1.25 1.25+l*cos(omega)];
@@ -56,16 +50,17 @@ function visCartPole(traj, bounds)
         pole.YData = pyp;
         
         set(lblTime,'String', ['t: ',num2str(i)]);
-        set(lblAction,'String',  ['a: ',num2str(traj{i}.action)]);
-        set(lblReward,'String', ['cr: ',num2str(traj{i}.cumReward)]);
+        set(lblAction,'String',  ['a: ',num2str(traj.action(i))]);
+        set(lblReward,'String', ['cr: ',num2str(traj.cumReward(i))]);
 
-        set(lblPosition,'String', ['p: ',num2str(traj{i}.state.position)]);
-        set(lblVelocity,'String',  ['v: ',num2str(traj{i}.state.velocity)]);
-        set(lblAcceleration,'String', ['acc: ',num2str(traj{i}.state.acceleration)]);
+        set(lblPosition,'String', ['p: ',num2str(traj.state(i,1))]);
+        set(lblVelocity,'String',  ['v: ',num2str(traj.state(i,2))]);
+        set(lblAcceleration,'String', ['acc: ',num2str(traj.state(i,3))]);
         
-        set(lblAngle,'String',  ['ang: ',num2str(traj{i}.state.angle)]);
-        set(lblAngularVelocity,'String', ['angV: ',num2str(traj{i}.state.angularVelocity)]);
+        set(lblAngle,'String',  ['ang: ',num2str(traj.state(i,4))]);
+        set(lblAngularVelocity,'String', ['angV: ',num2str(traj.state(i,5))]);
         
         pause(0.02);
     end
+    hold off;
 end

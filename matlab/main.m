@@ -2,8 +2,9 @@ function ret = main()
     addpath('fromMatlab');
     
     global opts;
-    
-    trials = 13*13;
+    global failz;
+       
+    trials = 40;
     bayOptSteps = 20;
     
     initialPolicies = 10;
@@ -17,13 +18,17 @@ function ret = main()
     %opts.covarianceFcn = 'squaredexponential';
     %opts.covarianceFcn = @sqExpCovariance;
     opts.covarianceFcn = @trajectoryCovariance;
-        
-    opts.problem = 'cartPole';
-    %opts.problem = 'mountainCar';
-    addpath(opts.problem);
     
-    if isequal(opts.problem, 'cartPole')
+    opts.environment = 'acroBot';
+%     opts.environment = 'cartPole';
+%     opts.environment = 'mountainCar';
+    opts.visualize = true;
+    
+    addpath(opts.environment);    
+    
+    if isequal(opts.environment, 'cartPole')
         dim = 4;
+        opts.actionList = [];	%continuous action selection
         opts.bounds.position = [-5, 5];
         opts.bounds.angle = [-90 * pi / 180, 90 * pi / 180];
         opts.bounds.rewardPosition = [-1, 1];
@@ -31,20 +36,39 @@ function ret = main()
         opts.state0 = zeros(1,5); %position, velocity, acceleration, angle, angularVelocity
         opts.timeSteps = 1000;
     
-        %opts.execPolicyFcn = @execPolicyCartPole;
         opts.actionSelectionFcn = @actionSelectionCartPole;
         opts.simFcn = @simCartPole;
-    elseif isequal(opts.problem, 'mountainCar')
-        dim = 18;        
+        opts.rewardFcn = @rewardCartPole;
+        opts.visFcn = @visCartPole;
+    elseif isequal(opts.environment, 'mountainCar')
+        dim = 9*2;
+        opts.actionList = [-1,1];   %apply acceleration to the rear or forward
         opts.bounds.position = [-1.2, 0.5];
         opts.bounds.velocity = [-0.07, 0.07];
         opts.state0 = [-0.5, 0]; %position, velocity
         opts.timeSteps = 400;
-        
-        %opts.execPolicyFcn = @execPolicyMountainCar;
+                
         opts.actionSelectionFcn = @actionSelectionMountainCar;
         opts.simFcn = @simMountainCar;
+        opts.rewardFcn = @rewardMountainCar;
+        opts.visFcn = @visMountainCar;
+    elseif isequal(opts.environment, 'acroBot')
+        dim = 4*3;
+        opts.actionList = [-1,0,1];       %apply torque to hip
+        opts.bounds.angle1 = [-pi, pi];
+        opts.bounds.angle2 = [-pi, pi];
+        opts.bounds.velocity1 = [-4*pi, 4*pi];
+        opts.bounds.velocity2 = [-9*pi, 9*pi];
+        opts.state0 = [0, 0, 0, 0]; %angle1, angle2, angularVelocity1, angularVelocity2
+        opts.timeSteps = 400;
+        %opts.actionStep = 4;
+        
+        opts.actionSelectionFcn = @actionSelectionAcroBot;
+        opts.simFcn = @simAcroBot;
+        opts.rewardFcn = @rewardAcroBot;
+        opts.visFcn = @visAcroBot;        
     end
+    
     
     ub = 1.*ones(1,dim);
     lb = -1.*ub;
@@ -103,25 +127,14 @@ function ret = main()
             end
         end
     else
-        global trial;
-        global hypers;
-        global failz;
-        h1 = logspace(-8,8,13);
-        h2 = logspace(-8,8,13);
-        [h1,h2] = meshgrid(h1,h2);
-        hypers = [h1(:),h2(:)];
-        
-        ret = zeros(trials,7);
         for trial=1:trials
             failz = 0;
-            errorRatio = [];
-            close all;
-            
             for i=1:dim
                 policy(1,i) = optimizableVariable(['policy',int2str(i)], [lb(1,i) ub(1,i)]);
             end 
             
             tic;
+            close all;
             tempRet = customBayesopt(@negObjectiveFcn, policy, opts,...
                 'IsObjectiveDeterministic',isDeterministic,...
                 'AcquisitionFunctionName','expected-improvement',...
@@ -136,17 +149,13 @@ function ret = main()
             ret(trial,2) = tempRet.MinObjective;
             ret(trial,3) = bestIter(1);
             ret(trial,4) = mean(tempRet.ObjectiveTrace);
-            ret(trial,5:6) = hypers(trial,1:2);
-            ret(trial,7) = failz;
-            disp(trial);
+            ret(trial,5) = failz;
             
             trajSave(trial,1) = tempRet.UserDataTrace(bestIter(1),1);
             
-%             ret{trial,1}.minutes = toc/60;
-%             ret{trial,1}.MinObjective = tempRet.MinObjective;
-%             ret{trial,1}.bestIter = bestIter(1);
-            if tempRet.MinObjective < -1
-%                 visCartPole(tempRet.UserDataTrace{bestIter(1),1},opts.bounds);
+            disp(num2str(trial));
+            if tempRet.MinObjective == bestIter(1)
+                opts.visFcn(tempRet.UserDataTrace{bestIter(1),1},opts.bounds);
             end
             save('ret.mat','ret', 'trajSave');
         end

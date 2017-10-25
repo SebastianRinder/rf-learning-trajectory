@@ -1,4 +1,4 @@
-function [sNext, reward, finished] = simCartPole(state, action, bounds)
+function sNext = simCartPole(state, action, ~)
     %position
     %velocity
     %acceleration
@@ -19,50 +19,26 @@ function [sNext, reward, finished] = simCartPole(state, action, bounds)
     Tau             = 0.02;     %Time interval for updating the values
     Fourthirds      = 4.0/3.0;
 
-%     action = bound(action, bounds.action);
+%     action = applyBound(action, bounds.action);
     force = action * Force_Mag;
     
     sinOmega = sin(omega);
     cosOmega = cos(omega);
     
     temp     = (force + PoleMass_Length * omega_dot * omega_dot * sinOmega) / Total_Mass;
-    omegaacc = (g * sinOmega - cosOmega * temp) / (Length * (Fourthirds - Mass_Pole * cosOmega * cosOmega / Total_Mass));
-    xacc     = temp - PoleMass_Length * omegaacc * cosOmega / Total_Mass;
+    omega_dot_dot = (g * sinOmega - cosOmega * temp) / (Length * (Fourthirds - Mass_Pole * cosOmega * cosOmega / Total_Mass));
+    x_dot_dot     = temp - PoleMass_Length * omega_dot_dot * cosOmega / Total_Mass;
         
     % Update the four state variables, using Euler's method.
     x         = x + Tau * x_dot;
-    x_dot     = x_dot + Tau * xacc;   
+    x_dot     = x_dot + Tau * x_dot_dot;   
     omega     = omega + Tau * omega_dot;
-    omega_dot = omega_dot+Tau*omegaacc;
+    omega_dot = omega_dot + Tau * omega_dot_dot;
 
     sNext(1) = x;
     sNext(2) = x_dot;
-    sNext(3) = xacc;
+    sNext(3) = x_dot_dot;
     sNext(4) = omega;
-    sNext(5) = omega_dot;
-    
-    reward = 1;
-    if outBounds(x, bounds.rewardPosition)
-        reward = reward - 1;
-    end
-    if outBounds(omega, bounds.rewardAngle)
-        reward = reward - 1;
-    end
-
-    finished = false;
-    if outBounds(x, bounds.position) || outBounds(omega, bounds.angle)
-        finished = true;   
-    end
+    sNext(5) = omega_dot; 
 end
 
-function ret = outBounds(x, bounds)
-	minBound = min(bounds);
-    maxBound = max(bounds);
-    ret = x < minBound || x > maxBound;
-end
-
-function ret = bound(x, bounds)
-    minBound = min(bounds);
-    maxBound = max(bounds);
-    ret = min(max(x, minBound), maxBound);
-end

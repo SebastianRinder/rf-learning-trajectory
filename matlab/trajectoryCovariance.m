@@ -1,4 +1,4 @@
-function Kmn = trajectoryCovariance(Xm, Xn, theta, customOpts)
+function Kmn = trajectoryCovariance(Xm, Xn, theta, opts)
     if ~isstruct(theta)
         hyper.l = max(theta(1), 1e-6);
         hyper.f = max(theta(2), 1e-6);
@@ -25,9 +25,9 @@ function Kmn = trajectoryCovariance(Xm, Xn, theta, customOpts)
             if all(Xm(i,:) == Xn(j,:))
                 D(i,j) = 0;
             else
-                traji = findTraj(Xm(i,:), customOpts.trajectory);
-                trajj = findTraj(Xn(j,:), customOpts.trajectory);
-                D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, customOpts);
+                traji = findTraj(Xm(i,:), opts.trajectory);
+                trajj = findTraj(Xn(j,:), opts.trajectory);
+                D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, opts);
             end
         end
     end
@@ -61,12 +61,12 @@ function Kmn = scale(D, hyper)
 %     Kmn = d ./ (hyper.l^2);
 %     Kmn = (hyper.f^2) * exp(-0.5*Kmn);
 
-global hypers;
-global trial;
-hyper.f = hypers(trial,1);
-hyper.l = hypers(trial,1);
-    hyper.f = 1e-6;
-    hyper.l = 1e-1;
+% global hypers;
+% global trial;
+% hyper.f = hypers(trial,1);
+% hyper.l = hypers(trial,1);
+%     hyper.f = 1e-6;
+%     hyper.l = 1e-1;
     %Kmn = hyper.f * exp(-hyper.l * D);
 %     Kmn = hyper.f * exp(-(10^(-trial)) * D);
     Kmn = hyper.f * exp(-hyper.l*D);
