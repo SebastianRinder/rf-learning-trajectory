@@ -1,13 +1,8 @@
-function [xMin,yMin] = globalMin(fcn,lb,ub,useMatlabGP)
+function [xMin,yMin] = globalMin(fcn,lb,ub)
 	xRand = randPolicy(lb,ub,10000);
-    if useMatlabGP
-        yRand = fcn(xRand);
-    else
-        for i=10000:-1:1
-            yRand(i,1) = fcn(xRand(i,:));
-        end
-    end
-    
+    yRand = fcn(xRand);
+    plot(sort(yRand));
+    pause(1);
     [~, rows] = sort(yRand, 'ascend');
     x0 = xRand(rows(1:10), :);
     %y0 = yRand(rows(1:10), :);

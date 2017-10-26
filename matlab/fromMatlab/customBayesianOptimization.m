@@ -1849,9 +1849,9 @@ classdef customBayesianOptimization
                 this.customOpts.trajectory.data(end+1,:) = this.PrivUserDataTrace{end,1}.data(1,:);
                 this.customOpts.trajectory.policy(end+1,:) = this.PrivUserDataTrace{end,1}.policy(1,:);
                 
-                %if this.customOpts.visualize && this.MinObjective == this.ObjectiveTrace(end)
+                if this.customOpts.visualize %&& this.MinObjective == this.ObjectiveTrace(end)
                     this.customOpts.visFcn(this.PrivUserDataTrace{end,1}.data{1,1}, this.customOpts.bounds);
-                %end
+                end
                 
                 this = fitModels(this);
                 % Update Objective minimum traces
