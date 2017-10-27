@@ -1,6 +1,13 @@
 function ret = main()
     addpath('fromMatlab');
+    %bishop book maximize 6.69
+    %compute chol instead of det
+    %0.5*sum(log(diag(chol(Cn)
+    %if p of chol is > 0 return 1e-20
     
+    %write wilson mail
+    
+    %std of objectives for noise
     global opts;
            
     trials = 1;
