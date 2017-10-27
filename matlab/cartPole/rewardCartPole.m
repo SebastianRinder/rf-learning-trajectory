@@ -11,7 +11,7 @@ function [reward, finished] = rewardCartPole(state, bounds, goalReward)
     end
     
     if reward == 1 && goalReward
-        reward = 500;
+        reward = 200;
     end
 
     finished = false;

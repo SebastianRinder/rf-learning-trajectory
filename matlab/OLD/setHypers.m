@@ -4,7 +4,7 @@ function hyper = setHypers(yTrain, lb, ub, isDeterministic)
     if hyper.f == 0
         hyper.f = 1;
     end
-
+fitrgp
     if isDeterministic
         hyper.noise = max(1e-8, std(yTrain)*1e-4);
         hyper.noiseLB = max(hyper.noise, 1e-6);
@@ -16,7 +16,7 @@ function hyper = setHypers(yTrain, lb, ub, isDeterministic)
     end
     hyper.noise = 0;
     hyper.noiseLB = 0;
-    hyper.l = 1;
-    hyper.f = 1;
+%     hyper.l = 1;
+%     hyper.f = 1;
 end
 

@@ -1,4 +1,4 @@
-function [finalReward, traj] = execPolicy(policy, opts)
+function [finalReward, traj] = objectiveFcn(policy, opts)
     traj.state = zeros(opts.timeSteps,size(opts.state0,2));
     traj.action = zeros(opts.timeSteps,1);
     traj.prob = zeros(opts.timeSteps,1);
@@ -35,5 +35,5 @@ function [finalReward, traj] = execPolicy(policy, opts)
         state = nextState;
     end
     
-    finalReward = cumReward; % / opts.timeSteps;
+    finalReward = cumReward + 1e-6; % / opts.timeSteps;
 end

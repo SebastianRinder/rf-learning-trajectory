@@ -1,10 +1,11 @@
-function Kmn = trajectoryCovariance(Xm, Xn, theta, opts)
-    if ~isstruct(theta)
-        hyper.l = max(theta(1), 1e-6);
-        hyper.f = max(theta(2), 1e-6);
-    else
-        hyper = theta;
-    end
+function Kmn = trajectoryCovariance(Xm, Xn, opts)
+%     if ~isstruct(theta)
+%         hyper.l = max(theta(1), 1e-6);
+%         hyper.f = max(theta(2), 1e-6);
+%     else
+%         hyper = theta;
+%     end
+    hyper = opts.hyper;
 
     m = size(Xm,1);
     n = size(Xn,1);

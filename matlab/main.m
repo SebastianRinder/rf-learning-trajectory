@@ -7,14 +7,14 @@ function ret = main()
     bayOptSteps = 200;
     
     initialPolicies = 10;
-    isDeterministic = 0;
+%     isDeterministic = 0;
+    useMaxMean = 0; % if the environment is very noisy use maxMean instead of max(knownY) in the expected improvement (Brochu 2009)
 
-    acqFcn = @expectedImprovement;
     opts.trajectoriesPerPolicy = 5;
         
 %     opts.covarianceFcn = 'squaredexponential';
-    opts.covarianceFcn = @sqExpCovariance;
-%     opts.covarianceFcn = @trajectoryCovariance;
+%     opts.covarianceFcn = @sqExpCovariance;
+    opts.covarianceFcn = @trajectoryCovariance;
     
 %     opts.environment = 'acroBot';
     opts.environment = 'cartPole';
@@ -58,8 +58,7 @@ function ret = main()
         opts.bounds.velocity2 = [-9*pi, 9*pi];
         opts.state0 = [0, 0, 0, 0]; %angle1, angle2, angularVelocity1, angularVelocity2
         opts.timeSteps = 400;
-        %opts.actionStep = 4;
-        
+                
         opts.actionSelectionFcn = @actionSelectionAcroBot;
         opts.simFcn = @simAcroBot;
         opts.rewardFcn = @rewardAcroBot;
@@ -75,7 +74,7 @@ function ret = main()
     for trial = 1:trials            
         opts.trajectory.data = cell(0);
         opts.trajectory.policy = [];
-
+        
         for i=1:initialPolicies
             opts.trajectory.policy(i,:) = randPolicy(lb, ub, 1);
             for j = 1:opts.trajectoriesPerPolicy
@@ -88,14 +87,27 @@ function ret = main()
             knownX = opts.trajectory.policy;
             knownY = objective;
             
-            [L,alpha] = preComputeK(opts.covarianceFcn, knownX, knownY);
+%             opts.hyper.f = mean(std(knownX));
+%             opts.hyper.l = std(knownY)/sqrt(2);
+            if isequal(opts.covarianceFcn, @sqExpCovariance)
+                opts.hyper.f = 500;
+                opts.hyper.l = 10;
+            else
+                opts.hyper.f = 10000;
+                opts.hyper.l = 0.1;
+            end
 
-%             negGPModel = @(testX) -gaussianProcessModel(testX, knownX, knownY, alpha);
-%             [~,negMaxMean] = globalMin(negGPModel, lb, ub);
-%             maxMean = -negMaxMean;
-% if the environment is very noisy use maxMean instead of max(knownY) in the expected improvement (Brochu 2010)
+            [opts.L, opts.alpha] = preComputeK(knownX, knownY, opts);
+
+            if useMaxMean
+                negGPModel = @(testX) -gaussianProcessModel(testX, knownX, knownY, opts);
+                [~,negMaxMean] = globalMin(negGPModel, lb, ub);
+                opts.bestY = -negMaxMean;                
+            else
+                opts.bestY = max(knownY);
+            end
             
-            negAcqFcn = @(testX) -expectedImprovement(testX, knownX, knownY, max(knownY), L);
+            negAcqFcn = @(testX) -expectedImprovement(testX, knownX, knownY, opts);
             opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub);
 
             for j = 1:opts.trajectoriesPerPolicy

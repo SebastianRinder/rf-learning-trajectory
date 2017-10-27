@@ -1,7 +1,10 @@
-function [L,alpha] = preComputeK(covarianceFcn, knownX, knownY)
+function [L,alpha] = preComputeK(knownX, knownY, opts)
 
-    K = covarianceFcn(knownX, knownX);
-    Knoise = K + 1e-6*eye(size(K));
+%     noise = std(knownY)/sqrt(2);
+    noise = 1e-6;
+
+    K = opts.covarianceFcn(knownX, knownX, opts);
+    Knoise = K + noise.*eye(size(K));
     L = chol(Knoise, 'lower');
     alpha = L'\(L \ knownY);        %Rasmussen, Williams 2005
 end

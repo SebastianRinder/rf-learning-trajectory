@@ -2,7 +2,7 @@ function [xMin,yMin] = globalMin(fcn,lb,ub)
 	xRand = randPolicy(lb,ub,10000);
     yRand = fcn(xRand);
     plot(sort(yRand));
-    pause(1);
+    pause(0.1);
     [~, rows] = sort(yRand, 'ascend');
     x0 = xRand(rows(1:10), :);
     %y0 = yRand(rows(1:10), :);

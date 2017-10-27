@@ -1,22 +1,13 @@
 function checkBayes2dRandGauss()
     addpath('..');
-    addpath('../matlab');
-    load('vararginForFit.mat','varargin');
     
-    %[func, lb, ub] = objectiveFcn(isGaussMix);
+    useMaxMean = 0;
+    %[func, lb, ub] = objFcn();
     load('gaussMix.mat');
-    useMatlabBayes = 0;
-    isGaussMix = 1;
-    if isGaussMix
-        if useMatlabBayes
-            objFun = @(x) -1.*func.eval(table2array(x));
-        else
-            objFun = @(x) -1.*func.eval(x);
-        end
-    else
-        objFun = @(x) func(x);
-    end
-%         
+        
+    opts.covarianceFcn = @sqExpCovariance;
+    objectiveFcn = @(x) func.eval(x)+randn*1e-6;
+       
 %     points = 100;   
 %     x1 = linspace(lb(1),ub(1), points);
 %     x2 = linspace(lb(2),ub(2), points);
@@ -25,72 +16,71 @@ function checkBayes2dRandGauss()
 %     obj = zeros(points,points);
 %     for j = 1:points
 %         for k = 1:points
-%             obj(j,k) = objFun([X1(j,k), X2(j,k)]);
+%             obj(j,k) = objectiveFcn([X1(j,k), X2(j,k)]);
 %         end
 %     end
 
     dim = 2;
-    acqFcn = @expectedImprovement;
-    isDeterministic = false;
     bayOptSteps = 100;
-    initialPolicies = 4;
-    objective = zeros(bayOptSteps,1);
-    policy = randPolicy(lb, ub, initialPolicies);
-    for i = 1:initialPolicies
-        if useMatlabBayes
-            objective(i,1) = objFun(array2table(policy(i,:)));
-        else
-            objective(i,1) = objFun(policy(i,:));
-        end
-    end     
+    initialPolicies = 5;
+    hypers = logspace(-2,2,5);
+    [h1,h2] = meshgrid(hypers);
+    hypers = [h1(:), h2(:)];
     
-    if ~useMatlabBayes
-        for i=1+initialPolicies:bayOptSteps+initialPolicies
-            gprMdl = fitGP(policy(1:i-1,:), objective(1:i-1), false);
-            
-            fMean = @(x) predict(gprMdl, x);
-            [~,minFMean] = globalMin(fMean, lb, ub);
-            
-            negAcqFcn = @(x) -acqFcn(x, gprMdl, minFMean);
-            policy(i,:) = globalMin(negAcqFcn, lb, ub);
-            objective(i,1) = objFun(policy(i,:));
+     
+    for i=1:initialPolicies
+        opts.trajectory.policy(i,:) = randPolicy(lb, ub, 1);
+        objective(i,1) = objectiveFcn(opts.trajectory.policy(i,:));
+    end
 
-            disp(['step : ',num2str(i-initialPolicies) ,'  |  cumulative reward: ', num2str(objective(i,1))]);        
+    for i = initialPolicies+1:initialPolicies+bayOptSteps
+        knownX = opts.trajectory.policy;
+        knownY = objective;
 
-            if mod(i-initialPolicies,bayOptSteps) == 0
-                if ~exist('myFig', 'var')
-                    myFig = figure();
-                end
-                plotting(policy(1:i,:), acqFcn, gprMdl, minFMean, myFig);
-            end
+%         opts.hyper.f = mean(std(knownX));
+%         opts.hyper.l = std(knownY)/sqrt(2);
+        
+        opts.hyper.f = mean(std(knownX))/2000;
+        opts.hyper.l = std(knownY)*10;
+        
+        [opts.L, opts.alpha] = preComputeK(knownX, knownY, opts);
+
+        if useMaxMean
+            negGPModel = @(testX) -gaussianProcessModel(testX, knownX, knownY, opts);
+            [~,negMaxMean] = globalMin(negGPModel, lb, ub);
+            opts.bestY = -negMaxMean;                
+        else
+            opts.bestY = max(knownY);
         end
-    else
-%         global fitVars;
-%         fitVars = [];
-        for i=1:dim
-            X(1,i) = optimizableVariable(['X',int2str(i)], [lb(1,i) ub(1,i)]);
+        
+        negAcqFcn = @(testX) -expectedImprovement(testX, knownX, knownY, opts);
+        opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub);
+        
+        objective(i,1) = objectiveFcn(opts.trajectory.policy(i,:));
+
+        disp(['trial : ',num2str(0) ,...
+            ' | step : ',num2str(i-initialPolicies) ,...
+            ' | cr: ',num2str(objective(i,1)),...
+            ' | f: ',num2str(opts.hyper.f),...
+            ' | l: ',num2str(opts.hyper.l)...
+            ]);
+        
+        knownX = opts.trajectory.policy;
+        knownY = objective;
+
+        if mod(i,10) == 0
+            plotting(knownX, knownY, opts);
         end
-        %fun = @(x) -objFun(x);
-        ret = bayesopt(objFun,X,'IsObjectiveDeterministic',isDeterministic,...
-        'AcquisitionFunctionName','expected-improvement',...
-        'MaxObjectiveEvaluations',100);
+        
     end
 
 end
 
-function [obj, lb, ub, hyper] = objectiveFcn(isGaussMix)
-    if isGaussMix
-        nbGauss = 25;
-        muRange = 10;
-        minSigma = 2;
-        obj = RandomGaussianMixtureFunction(nbGauss, muRange, minSigma);
-        [lb, ub] = obj.getRange();
-        hyper = [0.1, 1];
-    else
-        obj = @(x) sin(x(1))+cos(x(2));
-        lb = [-2*pi,0];
-        ub = [2*pi, 4*pi];
-        hyper = [1 1];
-    end
+function [func, lb, ub] = objFcn()
+    nbGauss = 25;
+    muRange = 10;
+    minSigma = 2;
+    func = RandomGaussianMixtureFunction(nbGauss, muRange, minSigma);
+    [lb, ub] = func.getRange();
 end
 

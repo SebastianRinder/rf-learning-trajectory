@@ -1,7 +1,9 @@
-function plotting(observedX, acqFcn, gprMdl, minFMean, myFig)
-    figure(myFig);
-    set(myFig, 'Name', num2str(size(observedX,1)));
+function plotting(knownX, knownY, opts)
+    selectFigure('check Bayes');
     clf;
+    
+    oldKnownX = knownX(1:end-1,:);
+    oldKnownY = knownY(1:end-1,1);
     
     load('gaussMix.mat');
     
@@ -10,36 +12,48 @@ function plotting(observedX, acqFcn, gprMdl, minFMean, myFig)
     var = zeros(100,100);
     for j = 1:100
         for k = 1:100
-            [EI(j,k), meanY(j,k), var(j,k)] = acqFcn([X1(j,k), X2(j,k)], gprMdl, minFMean);
+            [EI(j,k), meanY(j,k), var(j,k)] = expectedImprovement([X1(j,k), X2(j,k)], oldKnownX, oldKnownY, opts);
         end
     end
-    EI = -EI;
-
+    
     subplot(2,2,1);
-    contour(X1,X2,obj);
+    surf(X1,X2,obj);
+%     contour(X1,X2,obj);
     hold on;
-    plot(observedX(:,1),observedX(:,2),'r+');
-    plot(observedX(end,1),observedX(end,2),'k*');
+    plot3(oldKnownX(:,1),oldKnownX(:,2),oldKnownY(:,1),'r+');
+    plot3(knownX(end,1),knownX(end,2),knownY(end,1),'g*');
     colorbar;
 
     subplot(2,2,2);
-    contour(X1,X2,meanY);
+    surf(X1,X2,meanY);
+    hold on;
+    plot3(oldKnownX(:,1),oldKnownX(:,2),oldKnownY(:,1),'r+');
+    plot3(knownX(end,1),knownX(end,2),knownY(end,1),'g*');
+%     contour(X1,X2,meanY);
     colorbar;
 
     subplot(2,2,3);
-    contour(X1,X2,EI);
+    surf(X1,X2,var);
     hold on;
-    plot(observedX(:,1),observedX(:,2),'r+');
-    plot(observedX(end,1),observedX(end,2),'k*');
+    plot3(oldKnownX(:,1),oldKnownX(:,2),oldKnownY(:,1),'r+');
+    plot3(knownX(end,1),knownX(end,2),knownY(end,1),'g*');
+    
+%     contour(X1,X2,EI);
+%     hold on;
+%     plot(oldKnownX(:,1),oldKnownX(:,2),'r+');
+%     plot(knownX(end,1),knownX(end,2),'k*');
     colorbar;
 
     subplot(2,2,4);
     surf(X1,X2,EI);
     hold on;
-    z = -acqFcn(observedX(end,:), gprMdl, minFMean);
-    plot3(observedX(end,1),observedX(end,2), z, 'ro', 'LineWidth', 5);
+    z = expectedImprovement(knownX(end,:), oldKnownX, oldKnownY, opts);
+    plot3(knownX(end,1),knownX(end,2), z, 'ro', 'LineWidth', 5);
     colorbar;
     
+    selectFigure('EI vals');
+    clf;
+    plot(sort(EI(:))); 
     keyboard;
 end
 
