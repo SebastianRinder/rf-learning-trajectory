@@ -70,7 +70,7 @@ function Kmn = scale(D, hyper)
 %     hyper.l = 1e-1;
     %Kmn = hyper.f * exp(-hyper.l * D);
 %     Kmn = hyper.f * exp(-(10^(-trial)) * D);
-    Kmn = hyper.f * exp(-hyper.l*D);
+    Kmn = hyper(1) * exp(-D./hyper(2));
     
 %     if max(max(D)) == 0
 %         Kmn = hyper.f .* ones(size(D));

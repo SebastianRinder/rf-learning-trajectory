@@ -26,7 +26,8 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
         traj.cumReward(i,1) = cumReward;
         
         if finished
-            traj.state(i+1:end,:) = [];
+            traj.state(i+1,:) = nextState;
+            traj.state(i+2:end,:) = [];
             traj.action(i+1:end,:) = [];
             traj.prob(i+1:end,:) = [];
             traj.cumReward(i+1:end,:) = [];
@@ -35,5 +36,5 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
         state = nextState;
     end
     
-    finalReward = cumReward + 1e-6; % / opts.timeSteps;
+    finalReward = cumReward; % / opts.timeSteps;
 end

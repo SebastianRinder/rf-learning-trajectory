@@ -11,3 +11,8 @@ function [EI, mean, variance] = expectedImprovement(testX, knownX, knownY, opts)
         EI = stdY .* (v .* normcdf(v) + normpdf(v));
     end
 end
+
+% [FMean, YSD, ~] = predict(ObjectiveFcnGP, X);
+% FSD = sqrt(max(0, YSD.^2 - ObjectiveFcnGP.Sigma.^2));
+% GammaX = (FBest - FMean)./FSD;
+% PI = normcdf(GammaX, 0, 1);

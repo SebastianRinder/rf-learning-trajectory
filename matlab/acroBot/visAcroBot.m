@@ -6,7 +6,7 @@ function visAcroBot(traj, ~)
     grid on
     hold on;
     
-    T = length(traj.action);
+    T = length(traj.state);
     title(['time steps: ', num2str(T), '      final reward: ', num2str(traj.cumReward(end))]);
     
     checkBoxSkip = uicontrol('Style', 'checkbox', 'String', 'Skip Vis',...
