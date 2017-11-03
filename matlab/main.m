@@ -1,5 +1,10 @@
 function ret = main()
     addpath('fromMatlab');
+    %one slide motivation
+    %two slides bo
+    %two/three slides traj kernel
+    %two slides experiments
+    %one slide future work
     
     %write wilson mail
            
@@ -51,6 +56,8 @@ function ret = main()
                 end
                 hyperLb(3) = 1e-1;
                 hyperUb(3) = 2e1;
+                
+                %optimize log of hyper
                 
                 negHyperFcn = @(X) -findHypers(X, opts.trajectory.policy, knownY, opts);
                 opts.hyper = globalMin(negHyperFcn, hyperLb, hyperUb, true);
