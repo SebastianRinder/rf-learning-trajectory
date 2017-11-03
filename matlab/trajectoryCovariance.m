@@ -1,12 +1,4 @@
 function Kmn = trajectoryCovariance(Xm, Xn, opts)
-%     if ~isstruct(theta)
-%         hyper.l = max(theta(1), 1e-6);
-%         hyper.f = max(theta(2), 1e-6);
-%     else
-%         hyper = theta;
-%     end
-    hyper = opts.hyper;
-
     m = size(Xm,1);
     n = size(Xn,1);
     
@@ -35,8 +27,16 @@ function Kmn = trajectoryCovariance(Xm, Xn, opts)
     
     if prior
         D = D + D';
-    end    
-    Kmn = scale(D, hyper);
+    end
+    Kmn = opts.hyper(1) .* exp(-D./opts.hyper(2));
+    
+    if size(Kmn,1) == 10000
+        selectFigure('posterior Kernel without 0 (sorted)');
+        toPlot = Kmn(Kmn ~= 0);
+        plot(sort(toPlot(:)));
+        title([num2str(size(Kmn,1)*size(Kmn,2)), ' values in total']);
+        pause(0.1);
+    end
 end
 
 function traj = findTraj(X, trajectory)
@@ -46,40 +46,4 @@ function traj = findTraj(X, trajectory)
     else
         traj = trajectory.data(idx,:);
     end
-end
-
-function Kmn = scale(D, hyper)
-%     global hyperComp;
-%     hyperComp = [hyperComp; D(:)];
-    %Kmn = exp(-D);
-    %compute once per iter
-    
-%     hyper.l = 1;
-%     hyper.f = 1;
-%     m = 8.26275e-08;
-%     d = m * D;
-%     
-%     Kmn = d ./ (hyper.l^2);
-%     Kmn = (hyper.f^2) * exp(-0.5*Kmn);
-
-% global hypers;
-% global trial;
-% hyper.f = hypers(trial,1);
-% hyper.l = hypers(trial,1);
-%     hyper.f = 1e-6;
-%     hyper.l = 1e-1;
-    %Kmn = hyper.f * exp(-hyper.l * D);
-%     Kmn = hyper.f * exp(-(10^(-trial)) * D);
-    Kmn = hyper(1) * exp(-D./hyper(2));
-    
-%     if max(max(D)) == 0
-%         Kmn = hyper.f .* ones(size(D));
-%     else
-% %         m = 16 / max(max(D));
-% %         d = m * D;
-%         
-%         Kmn = D ./ (hyper.l^2);
-%         Kmn = (hyper.f^2) * exp(-0.5*Kmn
-%exp
-%     end
 end

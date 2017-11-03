@@ -12,6 +12,5 @@ function [aNext, prob] = actionSelectionAcroBot(policy, state, action, actionLis
     else
         aNext = [];
         prob = sum((actionList == action) .* P, 2);
-        
     end
 end

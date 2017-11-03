@@ -2,13 +2,18 @@ function [xMin,yMin] = globalMin(fcn,lb,ub,toHyper)
     if ~toHyper
         xRand = randPolicy(lb,ub,10000);
         yRand = fcn(xRand);
-        plot(sort(yRand));
+        selectFigure('Expected Improvement values (sorted)');
+        plot(sort(-yRand));
         pause(0.1);
     else
         xRand = 10.^(randPolicy(log10(lb),log10(ub),10000));
-        for i=10000:-1:1
+        yRand = zeros(10000,1);
+        for i=1:10000
             yRand(i,1) = fcn(xRand(i,:));
         end
+        selectFigure('Hyper Optimization (sorted)');
+        plot(sort(-yRand));
+        pause(0.1);
     end
     
     [~, rows] = sort(yRand, 'ascend');

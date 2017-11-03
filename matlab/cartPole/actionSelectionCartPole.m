@@ -1,5 +1,5 @@
 function [actionNext, quad] = actionSelectionCartPole(policy, state, action, ~)
-    error = 1e-4;
+    errorVariance = 1e-4;
        
     %position
     %velocity
@@ -12,13 +12,13 @@ function [actionNext, quad] = actionSelectionCartPole(policy, state, action, ~)
     mu(mu < -1) = -1;
     
     if isempty(action)        
-        noise = randn * error;        
+        noise = randn * errorVariance;        
         actionNext = mu + noise;
-        quad = (-(actionNext - mu).^2) ./ (2.*error.^2);
+        quad = (-(actionNext - mu).^2) ./ (2.*errorVariance.^2);
         
     else
         actionNext = [];
-        quad = (-(action - mu).^2) ./ (2.*error.^2);
+        quad = (-(action - mu).^2) ./ (2.*errorVariance.^2);
         
     end
 end

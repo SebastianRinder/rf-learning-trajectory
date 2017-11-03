@@ -35,12 +35,17 @@ function visCartPole(traj, bounds)
     T = length(traj.action);
     title(['time steps: ', num2str(T), '      final reward: ', num2str(traj.cumReward(end))]);
     
-    for i = 1:T
+    for i = 1:T+1
         if get(checkBoxSkip, 'Value') == 1
             break;
         end
-        x = traj.state(i,1);
-        omega = traj.state(i,4);
+        if i == T+1
+            x = traj.lastState(1,1);
+            omega = traj.lastState(1,4);
+        else
+            x = traj.state(i,1);
+            omega = traj.state(i,4);
+        end
         
         pxp=[x x+l*sin(omega)];
         pyp=[1.25 1.25+l*cos(omega)];
@@ -49,16 +54,18 @@ function visCartPole(traj, bounds)
         pole.XData = pxp;
         pole.YData = pyp;
         
-        set(lblTime,'String', ['t: ',num2str(i)]);
-        set(lblAction,'String',  ['a: ',num2str(traj.action(i))]);
-        set(lblReward,'String', ['cr: ',num2str(traj.cumReward(i))]);
+        if i < T+1
+            set(lblTime,'String', ['t: ',num2str(i)]);
+            set(lblAction,'String',  ['a: ',num2str(traj.action(i))]);
+            set(lblReward,'String', ['cr: ',num2str(traj.cumReward(i))]);
 
-        set(lblPosition,'String', ['p: ',num2str(traj.state(i,1))]);
-        set(lblVelocity,'String',  ['v: ',num2str(traj.state(i,2))]);
-        set(lblAcceleration,'String', ['acc: ',num2str(traj.state(i,3))]);
-        
-        set(lblAngle,'String',  ['ang: ',num2str(traj.state(i,4))]);
-        set(lblAngularVelocity,'String', ['angV: ',num2str(traj.state(i,5))]);
+            set(lblPosition,'String', ['p: ',num2str(traj.state(i,1))]);
+            set(lblVelocity,'String',  ['v: ',num2str(traj.state(i,2))]);
+            set(lblAcceleration,'String', ['acc: ',num2str(traj.state(i,3))]);
+
+            set(lblAngle,'String',  ['ang: ',num2str(traj.state(i,4))]);
+            set(lblAngularVelocity,'String', ['angV: ',num2str(traj.state(i,5))]);
+        end
         
         pause(0.02);
     end

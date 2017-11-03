@@ -26,8 +26,8 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
         traj.cumReward(i,1) = cumReward;
         
         if finished
-            traj.state(i+1,:) = nextState;
-            traj.state(i+2:end,:) = [];
+            traj.lastState = nextState;
+            traj.state(i+1:end,:) = [];
             traj.action(i+1:end,:) = [];
             traj.prob(i+1:end,:) = [];
             traj.cumReward(i+1:end,:) = [];

@@ -1,4 +1,4 @@
-function [opts] = environmentSettings(env)
+function [opts] = environmentSettings(env, visualize)
     if isequal(env, 'cartPole')
         opts.dim = 4;
         opts.actionList = [];	%continuous action selection
@@ -41,6 +41,7 @@ function [opts] = environmentSettings(env)
         opts.visFcn = @visAcroBot;        
     end
     
-    addpath(opts.environment);
+    opts.environment = env;
+    opts.visualize = visualize;    
+    addpath(env);
 end
-

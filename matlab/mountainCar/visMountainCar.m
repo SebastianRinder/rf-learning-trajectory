@@ -21,19 +21,28 @@ function visMountainCar(traj, bounds)
 
     car = plot(0,0, 'or', 'LineWidth', 4);
     
-    for t = 1:size(traj.action,1)
+    T = length(traj{1,1}.action);
+    
+    for i = 1:T+1
         if get(checkBoxSkip, 'Value') == 1
             break;
         end
         
-        p = traj.state(t,1);
+        if i == T+1
+            p = traj.lastState(1,1);
+        else
+            p = traj.state(i,1);
+        end
+        
         set(car, 'XData', p);
         set(car, 'YData', sin(3 * p)); 
 
-        set(lblTime,'String', ['t: ',num2str(t - 1)]);
-        set(lblAction,'String',  ['a: ',num2str(traj.action(t))]);
-        set(lblReward,'String', ['cr: ',num2str(traj.cumReward(t))]);
-
+        if i < T+1
+            set(lblTime,'String', ['t: ',num2str(i - 1)]);
+            set(lblAction,'String',  ['a: ',num2str(traj.action(i))]);
+            set(lblReward,'String', ['cr: ',num2str(traj.cumReward(i))]);
+        end
+        
         %drawnow
         pause(0.02);
     end

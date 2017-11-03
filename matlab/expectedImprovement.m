@@ -1,15 +1,11 @@
 function [EI, mean, variance] = expectedImprovement(testX, knownX, knownY, opts)
     [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts);
-    if any(variance <= 0)
-        if size(variance,1) > 1
-            keyboard;
-        end
-        EI = 0;
-    else        
-        stdY = sqrt(variance);    
-        v = (mean - opts.bestY) ./ stdY;
-        EI = stdY .* (v .* normcdf(v) + normpdf(v));
-    end
+
+    stdY = sqrt(max(0,variance));    
+    v = (mean - opts.bestY - 1) ./ stdY; %Brochu 2010
+    EI = stdY .* (v .* normcdf(v) + normpdf(v));
+
+    EI(isnan(EI)) = 0;
 end
 
 % [FMean, YSD, ~] = predict(ObjectiveFcnGP, X);
