@@ -2,7 +2,7 @@ function [EI, mean, variance] = expectedImprovement(testX, knownX, knownY, opts)
     [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts);
 
     stdY = sqrt(max(0,variance));    
-    v = (mean - opts.bestY - 1) ./ stdY; %Brochu 2010
+    v = (mean - opts.bestY) ./ stdY; %Brochu 2010
     EI = stdY .* (v .* normcdf(v) + normpdf(v));
 
     EI(isnan(EI)) = 0;

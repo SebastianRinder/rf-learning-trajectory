@@ -6,7 +6,7 @@ function [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts)
         mean = Ks' * alpha;      %Rasmussen, Williams 2005
         
 %             K = opts.L;
-%             Knoise = K + opts.hyper(3).*eye(size(K));
+%             Knoise = K + opts.hyperN.*eye(size(K));
 %             mean = Ks' * (Knoise \ knownY);
     else
         Kss = opts.covarianceFcn(testX(1,:), testX(1,:), opts);
@@ -16,7 +16,7 @@ function [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts)
         variance = (Kss - sum(Lk.^2))';
 
 %             K = opts.L;
-%             Knoise = K + opts.hyper(3).*eye(size(K));
+%             Knoise = K + opts.hyperN.*eye(size(K));
 %             mean = Ks' * (Knoise \ knownY);
 %             variance = Kss - diag(Ks' * (Knoise \ Ks));
     end
