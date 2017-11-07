@@ -4,17 +4,25 @@ function [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts)
     
     if nargout == 1
         alpha = opts.alpha;
-        mean = Ks' * alpha;      %Rasmussen, Williams 2005
+        try
+            mean = Ks' * alpha;      %Rasmussen, Williams 2005
+        catch me
+            disp('gpm1');
+        end
         
 %             K = opts.L;
 %             Knoise = K + opts.hyperN.*eye(size(K));
 %             mean = Ks' * (Knoise \ knownY);
     else
-        Kss = scaleKernel(0, opts);
-        L = opts.L;
-        Lk = L \ Ks;       %Python example, Nando de Freitas 2013
-        mean = Lk' * (L \ knownY);
-        variance = (Kss - sum(Lk.^2))';
+        try
+            Kss = scaleKernel(0, opts);
+            L = opts.L;
+            Lk = L \ Ks;       %Python example, Nando de Freitas 2013
+            mean = Lk' * (L \ knownY);
+            variance = (Kss - sum(Lk.^2))';
+        catch me
+            disp('gpm');
+        end
 
 %             K = opts.L;
 %             Knoise = K + opts.hyperN.*eye(size(K));
