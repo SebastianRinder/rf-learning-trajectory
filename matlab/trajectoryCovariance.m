@@ -1,4 +1,4 @@
-function Kmn = trajectoryCovariance(Xm, Xn, opts)
+function D = trajectoryCovariance(Xm, Xn, opts)
     m = size(Xm,1);
     n = size(Xn,1);
     
@@ -28,17 +28,7 @@ function Kmn = trajectoryCovariance(Xm, Xn, opts)
     if prior
         D = D + D';
     end
-    Kmn = opts.hyper(1) .* exp(-D./opts.hyper(2));
     
-    if opts.plotting
-        if size(Kmn,1) == 10000
-            selectFigure('posterior Kernel without 0 (sorted)');
-            toPlot = Kmn(Kmn ~= 0);
-            plot(sort(toPlot(:)));
-            title([num2str(size(Kmn,1)*size(Kmn,2)), ' values in total']);
-            pause(0.1);
-        end
-    end
 end
 
 

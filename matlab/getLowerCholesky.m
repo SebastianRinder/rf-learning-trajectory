@@ -1,6 +1,7 @@
-function [L, alpha, hyperN] = preComputeK(knownX, knownY, opts)
+function [L, alpha] = getLowerCholesky(D, knownY, opts)
 %     noise = std(knownY)/sqrt(2);
-    K = opts.covarianceFcn(knownX, knownX, opts);
+    %K = opts.covarianceFcn(knownX, knownX, opts);
+    K = scaleKernel(D, opts);
     
     hyperN = opts.hyperN;
     %p = 1;
@@ -15,7 +16,7 @@ function [L, alpha, hyperN] = preComputeK(knownX, knownY, opts)
     %end
     
     if p>0
-        disp('asd');
+        %disp('asd');
     end
     
     if nargout > 1

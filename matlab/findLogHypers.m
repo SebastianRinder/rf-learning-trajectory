@@ -1,6 +1,7 @@
 function logLi = findLogHypers(log10Hyper, knownX, knownY, opts)
     opts.hyper = 10.^(log10Hyper);
-    L = preComputeK(knownX,knownY,opts);
+    
+    L = getLowerCholesky(opts.D, knownY, opts);
     
     try
         if ~isempty(L)

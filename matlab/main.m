@@ -9,16 +9,16 @@ function ret = main()
     %write wilson mail
            
     trials = 40;
-    bayOptSteps = 140;
+    bayOptSteps = 40;
     initialPolicies = 10;   
 
     %env = 'acroBot', 'cartPole', 'mountainCar'
     %visualize = 'none', 'best', 'all'
     opts = environmentSettings('cartPole', 'none');
     opts.trajectoriesPerPolicy = 5;
-    opts.covarianceFcn = @sqExpCovariance;
-%     opts.covarianceFcn = @trajectoryCovariance;
-    opts.plotting = 0;
+%     opts.covarianceFcn = @sqExpCovariance;
+    opts.covarianceFcn = @trajectoryCovariance;
+    opts.debugPlotting = 0;
 
     ub = 1.*ones(1,opts.dim);
     lb = -1.*ub;
@@ -29,7 +29,8 @@ function ret = main()
     useMaxMean = false; % if the environment is very noisy use maxMean instead of max(knownY) in the expected improvement (Brochu 2010)
     
     ret = cell(trials,1);
-    for trial = 1:trials            
+    for trial = 1:trials
+        tic
         opts.trajectory.data = cell(0);
         opts.trajectory.policy = [];
         allF = [];
@@ -41,29 +42,34 @@ function ret = main()
             for j = 1:opts.trajectoriesPerPolicy
                 [allF(i,j), opts.trajectory.data{i,j}] = objectiveFcn(opts.trajectory.policy(i,:), opts);
             end
-            errorNoise = randn(1, opts.trajectoriesPerPolicy) .* opts.hyperN;
-            knownY(i,1) = mean(allF(i,:) + errorNoise); %Bishop 2006
+%             errorNoise = randn(1, opts.trajectoriesPerPolicy) .* opts.hyperN;
+%             knownY(i,1) = mean(allF(i,:) + errorNoise); %Bishop 2006
+            knownY(i,1) = mean(allF(i,:));
         end
 
-        for i = initialPolicies+1:initialPolicies+bayOptSteps
+        for i = initialPolicies+1:initialPolicies+bayOptSteps            
+            opts.D = opts.covarianceFcn(opts.trajectory.policy, opts.trajectory.policy, opts);
             
-            if mod(i-initialPolicies-1,1) == 0 %find Hyperparameters
-                if i == initialPolicies+1
-                    hyperLb(1:2) = -10;
-                    hyperUb(1:2) = 10;
-                else
-                    hyperLb(1:2) = log10(hyperTrace(end,1:2)) - 2;
-                    hyperUb(1:2) = log10(hyperTrace(end,1:2)) + 2;
-                end
-                
-                negHyperFcn = @(X) -findLogHypers(X, opts.trajectory.policy, knownY, opts);
-                log10Hyper = globalMin(negHyperFcn, hyperLb, hyperUb, true, opts.plotting);
-                opts.hyper = 10.^(log10Hyper);
-                
-                hyperTrace = [hyperTrace; opts.hyper];
+%             if mod(i-initialPolicies-1,1) == 0 %find Hyperparameters
+%                 if i == initialPolicies+1
+%                     hyperLb(1:2) = -10;
+%                     hyperUb(1:2) = 10;
+%                 else
+%                     hyperLb(1:2) = log10(hyperTrace(end,1:2)) - 2;
+%                     hyperUb(1:2) = log10(hyperTrace(end,1:2)) + 2;
+%                 end
+%                 
+%                 negHyperFcn = @(X) -findLogHypers(X, opts.trajectory.policy, knownY, opts);
+%                 log10Hyper = globalMin(negHyperFcn, hyperLb, hyperUb, true, opts.debugPlotting);
+%                 opts.hyper = 10.^(log10Hyper);
+%             end
+            
+            opts.hyperN = mean(std(allF,0,2));
+            if opts.hyperN == 0
+                opts.hyperN = 1;
             end
+            hyperTrace = [hyperTrace; opts.hyper, opts.hyperN];
             
-            [opts.L, opts.alpha, opts.hyperN] = preComputeK(opts.trajectory.policy, knownY, opts);            
             
             if useMaxMean
 %                 negGPModel = @(testX) -gaussianProcessModel(testX, knownX, knownY, opts);
@@ -73,21 +79,23 @@ function ret = main()
                 opts.bestY = max(knownY);
             end
             
+            [opts.L, opts.alpha] = getLowerCholesky(opts.D, knownY, opts);            
             negAcqFcn = @(testX) -expectedImprovement(testX, opts.trajectory.policy, knownY, opts);
-            opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub, false, opts.plotting);
+            opts.trajectory.policy(i,:) = globalMin(negAcqFcn, lb, ub, false, opts.debugPlotting);
 
             for j = 1:opts.trajectoriesPerPolicy
                 [allF(i,j), opts.trajectory.data{i,j}] = objectiveFcn(opts.trajectory.policy(i,:), opts);
             end
-            errorNoise = randn(1, opts.trajectoriesPerPolicy) .* opts.hyperN;
-            knownY(i,1) = mean(allF(i,:) + errorNoise); %Bishop 2006
+%             errorNoise = randn(1, opts.trajectoriesPerPolicy) .* opts.hyperN;
+%             knownY(i,1) = mean(allF(i,:) + errorNoise); %Bishop 2006
+            knownY(i,1) = mean(allF(i,:));
             if knownY(i,1) > 1300
                 disp('crfail');
             end
             disp(['trial : ',num2str(trial) ,...
                 ' | step : ',num2str(i-initialPolicies) ,...
                 ' | cr: ',num2str(knownY(i,1)),...
-                ' | hyper: ',num2str(opts.hyper)...
+                ' | hyper: ',num2str(hyperTrace(end,:))...
                 ]);
 %             plot(objective(initialPolicies+1:end));
 %             pause(0.1);
@@ -106,7 +114,12 @@ function ret = main()
                     opts.visFcn(traj,opts.bounds);
                 end
             end
+            save('retCartpoleTraj.mat','ret');
+            if i >= initialPolicies+20 && max(knownY) < 200
+                break;
+            end
         end
-        save('retCartpole.mat','ret');
+        
+        disp(num2str(toc/60));
     end
 end

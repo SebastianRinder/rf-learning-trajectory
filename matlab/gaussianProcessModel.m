@@ -1,5 +1,6 @@
 function [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts)
-    Ks = opts.covarianceFcn(testX, knownX, opts)';
+    Ds = opts.covarianceFcn(testX, knownX, opts)';
+    Ks = scaleKernel(Ds, opts);
     
     if nargout == 1
         alpha = opts.alpha;
@@ -9,7 +10,7 @@ function [mean, variance] = gaussianProcessModel(testX, knownX, knownY, opts)
 %             Knoise = K + opts.hyperN.*eye(size(K));
 %             mean = Ks' * (Knoise \ knownY);
     else
-        Kss = opts.covarianceFcn(testX(1,:), testX(1,:), opts);
+        Kss = scaleKernel(0, opts);
         L = opts.L;
         Lk = L \ Ks;       %Python example, Nando de Freitas 2013
         mean = Lk' * (L \ knownY);
