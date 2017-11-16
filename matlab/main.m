@@ -6,6 +6,8 @@ function ret = main()
     %two slides experiments
     %one slide future work
                
+    %look for error variance in action selection and noise
+    
     trials = 40;
     bayOptSteps = 40;
     initialPolicies = 10;
@@ -14,8 +16,8 @@ function ret = main()
     %visualize = 'none', 'best', 'all'
     opts = environmentSettings('cartPole', 'none');
     opts.trajectoriesPerPolicy = 5;
-%     opts.covarianceFcn = @sqExpCovariance;
-    opts.covarianceFcn = @trajectoryCovariance;
+    opts.covarianceFcn = @sqExpCovariance;
+%     opts.covarianceFcn = @trajectoryCovariance;
     opts.debugPlotting = 0;
 
     ub = 1.*ones(1,opts.dim);
@@ -50,16 +52,16 @@ function ret = main()
             
             if mod(i-initialPolicies-1,1) == 0 %find Hyperparameters
                 if i == initialPolicies+1
-                    hyperLb(1:2) = -10;
-                    hyperUb(1:2) = 10;
+                    hyperLb(1:2) = -25;
+                    hyperUb(1:2) = 20;
                 else
-                    hyperLb(1:2) = log10(hyperTrace(end,1:2)) - 2;
-                    hyperUb(1:2) = log10(hyperTrace(end,1:2)) + 2;
+                    hyperLb(1:2) = log(hyperTrace(end,1:2)) - 7;
+                    hyperUb(1:2) = log(hyperTrace(end,1:2)) + 7;
                 end
                 
-                negHyperFcn = @(X) -findLogHypers(X, opts.trajectory.policy, knownY, opts);
-                log10Hyper = globalMin(negHyperFcn, hyperLb, hyperUb, true, opts.debugPlotting);
-                opts.hyper = 10.^(log10Hyper);
+                negLogHyperFcn = @(X) -findLogHypers(X, opts.trajectory.policy, knownY, opts);
+                logHyper = globalMin(negLogHyperFcn, hyperLb, hyperUb, true, opts.debugPlotting);
+                opts.hyper = exp(logHyper);
             end
             
             opts.hyperN = mean(std(allY,0,2).^2);
@@ -68,7 +70,7 @@ function ret = main()
             end
             hyperTrace = [hyperTrace; opts.hyper, opts.hyperN];
                         
-            [opts.L, opts.alpha] = getLowerCholesky(opts.D, knownY, opts);            
+            [opts.L, opts.alpha] = getLowerCholesky(opts.D, knownY, opts, false);            
             
             if useMaxMean
                 negGPModel = @(testX) -gaussianProcessModel(testX, opts.trajectory.policy, knownY, opts);
@@ -112,12 +114,8 @@ function ret = main()
                     opts.visFcn(traj,opts.bounds);
                 end
             end
-            save('retCartpoleTraj.mat','ret');
-            if i >= initialPolicies+20 && max(knownY) < 200
-                break;
-            end
         end
-        
+        save('retCartpoleSquared150_1-40_2.mat','ret');
         disp(num2str(toc/60));
     end
 end

@@ -8,6 +8,7 @@ function [EI, mean, variance] = expectedImprovement(testX, knownX, knownY, opts)
 
         EI(isnan(EI)) = 0;
     else
+        disp('ei fail');
         EI(1:size(testX,1),1) = 0;
     end
 end

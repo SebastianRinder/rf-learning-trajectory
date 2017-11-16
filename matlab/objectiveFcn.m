@@ -5,24 +5,26 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
     traj.cumReward = zeros(opts.timeSteps,1);
     
     cumReward = 0;    
-    
+    %probFac = 1;
     if isequal(opts.environment, 'cartPole')
         angle = randn * 0.01;
         s = sign(angle);
         if s == 0, s = 1; end
         opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
+        
+        %probFac = 1/sqrt(1e-4.*2.*pi);
     end
     state = opts.state0;    
     
     for i=1:opts.timeSteps
-        [action, prob] = opts.actionSelectionFcn(policy, state, [], opts.actionList);
+        [action, optProb] = opts.actionSelectionFcn(policy, state, [], opts.actionList);
         nextState = opts.simFcn(state, action, opts.bounds);        
         [reward, finished] = opts.rewardFcn(nextState, opts.bounds, i==opts.timeSteps);
 
         cumReward = cumReward + reward;
         traj.state(i,:) = state;
         traj.action(i,1) = action;
-        traj.prob(i,1) = prob;
+        traj.prob(i,1) = optProb;
         traj.cumReward(i,1) = cumReward;
         
         if finished

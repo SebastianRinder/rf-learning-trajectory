@@ -14,11 +14,11 @@ function [actionNext, quad] = actionSelectionCartPole(policy, state, action, ~)
     if isempty(action)        
         noise = randn * errorVariance;        
         actionNext = mu + noise;
-        quad = (-(actionNext - mu).^2) ./ (2.*errorVariance.^2);
+        quad = (-(actionNext - mu).^2) ./ (2.*errorVariance);
         
     else
         actionNext = [];
-        quad = (-(action - mu).^2) ./ (2.*errorVariance.^2);
+        quad = (-(action - mu).^2) ./ (2.*errorVariance);
         
     end
 end
