@@ -39,11 +39,14 @@ end
 nbGauss = 25;
 muRange = 10;
 minSigma = 2;
-func = static_optimization_algs.RandomGaussianMixtureFunction(nbGauss, muRange, minSigma);
+addpath('cartPole');
+% func = static_optimization_algs.RandomGaussianMixtureFunction(nbGauss, muRange, minSigma);
+func = cartPole();
 %%% plotting objective
 hnd = figure(1);
-func.plot();
-funSignature = ['func' num2str(seed) '_' num2str(nbGauss) '_' num2str(muRange) '_' num2str(minSigma)];
+% func.plot();
+% funSignature = ['func' num2str(seed) '_' num2str(nbGauss) '_' num2str(muRange) '_' num2str(minSigma)];
+funSignature = 'cartPole';
 fname = [rootPlot 'objective_' funSignature];
 hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
@@ -53,15 +56,15 @@ all_signatures = {};
 
 % init distribution and co.
 optimizerInput.fun = func;
-optimizerInput.initVar = 10;
-mu = [0 0]; covC = eye(2) * optimizerInput.initVar;
+optimizerInput.initVar = 1;
+mu = zeros(1, func.opts.dim); covC = eye(func.opts.dim) * optimizerInput.initVar;
 optimizerInput.xinit = 'varargin{1}{2}.opts.initDistrib.getSamples(1)';
 % optimizerInput.xinit = [0; 0];
 optimizerInput.initDistrib = static_optimization_algs.Normal(mu, covC);
 optimizerInput.maxEvals = 2000; %cmaes wrapper only depends on this.
 optimizerInput.nbSamplesPerIter = 6;
 optimizerInput.maxIterReuse = 30;
-optimizerInput.maxIter = 20;
+optimizerInput.maxIter = 100;
 
 % opt_alg = static_optimization_algs.CMAESWrapper(optimizerInput, func);
 % opt_alg = static_optimization_algs.CMAESGPMean(optimizerInput, func);
@@ -75,7 +78,7 @@ all_signatures{end+1} = [opt_alg.getSignature() '_' funSignature];
 videoFile = VideoWriter([rootPlot 'policy_search_' all_signatures{end}]);%, 'Uncompressed AVI');
 videoFile.FrameRate = 4;
 opt_alg.video = videoFile;
-
+opt_alg.video = [];
 disp(['starting ' all_signatures{end}]);
 tic
 opt_alg.optimize()
