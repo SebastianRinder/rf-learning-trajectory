@@ -38,5 +38,5 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
         state = nextState;
     end
     
-    finalReward = cumReward; % / opts.timeSteps;
+    finalReward = cumReward; %/ opts.timeSteps;
 end

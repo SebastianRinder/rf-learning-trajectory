@@ -1,12 +1,12 @@
-classdef cartPoleClass < handle
+classdef cartPole < handle
     properties
         opts;
     end
     
     methods
-        function obj = cartPoleClass()
+        function obj = cartPole()
             obj.opts = environmentSettings('cartPole', 'none');
-            obj.opts.trajectoriesPerPolicy = 5;
+            obj.opts.trajectoriesPerPolicy = 1;
         end
         
         function vals = eval(obj, samples)

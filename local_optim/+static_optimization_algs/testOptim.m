@@ -48,7 +48,7 @@ end
 % hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
 addpath('cartPole');
-func = cartPoleClass();
+func = cartPole();
 
 
 %% optimization algo

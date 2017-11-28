@@ -7,6 +7,7 @@ function ret = main()
     %one slide future work
                
     %look for error variance in action selection and noise
+    %use global min instead 10000 rnd
     
     trials = 40;
     bayOptSteps = 40;
