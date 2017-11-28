@@ -107,8 +107,8 @@ classdef DensityWeightedBO
                 end
                 
                 %hyper param optim
-                [gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core.hyperParamOptim(x, y, gp, gp_rec, gpHyperOption, nbSamplesPerIter);
-                gp = static_optimization_algs.DensityWeightedBO_core.copyHyperParam(gp, gp_rec, 1);
+%                 [gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core.hyperParamOptim(x, y, gp, gp_rec, gpHyperOption, nbSamplesPerIter);
+%                 gp = static_optimization_algs.DensityWeightedBO_core.copyHyperParam(gp, gp_rec, 1);
                 
                 % learn quad model from GP
 %                 quadModelSamples = currentDistrib.getSamples(400);

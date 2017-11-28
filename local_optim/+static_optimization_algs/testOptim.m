@@ -1,3 +1,7 @@
+%multivariate gaussian wikipedia
+%last chapter
+% or use Normal.m getSample
+
 %clear variables;
 
 %%%% Plot data with varying size according to reward
@@ -43,7 +47,7 @@ end
 % %%% plotting objective
 % hnd = figure(1);
 % func.plot();
-% funSignature = ['func' num2str(seed) '_' num2str(nbGauss) '_' num2str(muRange) '_' num2str(minSigma)];
+ funSignature = ['cartPole'];
 % fname = [rootPlot 'objective_' funSignature];
 % hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
@@ -90,7 +94,7 @@ all_signatures = {};
 
 % init distribution and co.
 optimizerInput.fun = func;
-optimizerInput.initVar = 10;
+optimizerInput.initVar = 1;
 %mu = [0 0];
 %covC = eye(2) * optimizerInput.initVar;
 mu = zeros(1,func.opts.dim);
@@ -101,7 +105,7 @@ optimizerInput.epsiKL = .05;
 optimizerInput.entropyReduction = .05;
 optimizerInput.nbSamplesPerIter = 6;
 optimizerInput.nbInitSamples = 5;
-optimizerInput.nbIter = 60;
+optimizerInput.nbIter = 100;
 optimizerInput.maxEvals = 500; %cmaes wrapper only depends on this.
 %optimizerInput.maxIterReuse = optimizerInput.nbIter;
 optimizerInput.maxIterReuse = 30;
@@ -141,34 +145,34 @@ optimizerInput.featureName = 'noFeature';
 optimizerInput.yCenteringType = 'mean';
 % optimizerInput.yCenteringType = 'max';
 
-%optimizerInput.videoFile = [];
+optimizerInput.videoFile = [];
 
 seed = rng;
 seedStartOpt = seed.State(2)
 
 for k = 1:length(optimizers)
     rng(seedStartOpt);
-    %all_signatures{end+1} = [optimizers{k}.getSignature(optimizerInput) '_' funSignature];
-    %optimizerInput.videoFile = VideoWriter([rootPlot 'policy_search_' all_signatures{end}]);%, 'Uncompressed AVI');
-    %optimizerInput.videoFile.FrameRate = 4;
-    %disp(['starting ' all_signatures{end}]);
+    all_signatures{end+1} = [optimizers{k}.getSignature(optimizerInput) '_' funSignature];
+%     optimizerInput.videoFile = VideoWriter([rootPlot 'policy_search_' all_signatures{end}]);%, 'Uncompressed AVI');
+%     optimizerInput.videoFile.FrameRate = 4;
+    disp(['starting ' all_signatures{end}]);
     tic
     [all_perfs{end+1}] = optimizers{k}.optimizeStruct(optimizerInput, func);
     toc
 end
 
 %% performance plotting
-% fname = [rootPlot 'perfOn_' funSignature '_' all_signatures{1}];
-% hnd = figure(5);
-% hold on;
-% for k = 1:length(optimizers)
-%     plot(all_perfs{k});
-%     perfs = all_perfs{k};
-% end
-% legHnd = legend(all_signatures{:}, 'Location','southeast');
-% set(legHnd, 'interpreter', 'none');
-% set(legHnd, 'FontSize', 7);
-% hgexport(hnd, [fname '.eps']);
+fname = [rootPlot 'perfOn_' funSignature '_' all_signatures{1}];
+hnd = figure(5);
+hold on;
+for k = 1:length(optimizers)
+    plot(all_perfs{k});
+    perfs = all_perfs{k};
+end
+legHnd = legend(all_signatures{:}, 'Location','southeast');
+set(legHnd, 'interpreter', 'none');
+set(legHnd, 'FontSize', 7);
+hgexport(hnd, [fname '.eps']);
 
 %% kl plotting
 % fname = [rootPlot 'klOn_' funSignature '_' all_signatures{1}];
