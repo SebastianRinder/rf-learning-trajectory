@@ -6,4 +6,8 @@
 #*.mat
 
 # open office autosave
-*.ods#
+*.ods
+
+#plots
+*.eps
+*.avi

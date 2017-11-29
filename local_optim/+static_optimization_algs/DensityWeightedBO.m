@@ -25,6 +25,7 @@ classdef DensityWeightedBO
             currentDistrib = initDistrib;
             storedSamples = [];
             storedVals = [];
+            storedTrajectories = [];
             allVals = [];
             %%% initializing GP
             static_optimization_algs.GP.addGPStuffPath(gpStuffPath);
@@ -61,15 +62,17 @@ classdef DensityWeightedBO
             
             localSamples = [];
             localVals = [];
+            localTrajectories = [];
             for iter = 1:nbIter
                 neg_proba_thresh = -.8;
-                [newSamples, newVals, gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core.sample(currentDistrib, fun, nbSamplesPerIter, ...
-                    localSamples, localVals, gp, gp_rec, neg_proba_thresh, gpHyperOption, featureFunction, yCenteringType);
+                [newSamples, newVals, newtrajectory, gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core_trajectory.sample(currentDistrib, fun, nbSamplesPerIter, ...
+                    localSamples, localVals, localTrajectories, gp, gp_rec, neg_proba_thresh, gpHyperOption, featureFunction, yCenteringType);
                 
                 % STEP 2: evaluate and manage dataset
                 allVals = [allVals; newVals];
                 storedSamples = [storedSamples; newSamples];
                 storedVals = [storedVals; newVals];
+                storedTrajectories = [storedTrajectories; newtrajectory];
                 % delete old samples
                 if(iter > maxIterReuse)
                     storedSamples = storedSamples(nbSamplesPerIter+1:end, :);
@@ -82,9 +85,11 @@ classdef DensityWeightedBO
                     localMask = mahDistMu < cutOffDist;
                     localSamples = storedSamples(localMask, :);
                     localVals = storedVals(localMask);
+                    localTrajectories = storedTrajectories(localMask);
                 else
                     localSamples = storedSamples;
                     localVals = storedVals;
+                    localTrajectories = storedTrajectories;
                 end
                 
                 % STEP 3: update search distribution

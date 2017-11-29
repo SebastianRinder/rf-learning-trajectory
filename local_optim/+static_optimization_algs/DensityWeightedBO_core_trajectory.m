@@ -1,13 +1,14 @@
 classdef DensityWeightedBO_core_trajectory
     methods (Static)
         %% main function
-        function [newSamples, newVals, gp, gp_rec] = sample(dist, fun, lambda, xl, yl, gp, gp_rec, beta, gpHyperOption, yCenteringType)
+        function [newSamples, newVals, newTrajectories, gp, gp_rec] = sample(dist, fun, lambda, xl, yl, trajectories ,gp, gp_rec, beta, gpHyperOption, ~, yCenteringType)
             % STEP 1: sample
             if(isempty(xl))
                 newSamples = dist.getSamples(lambda);
-                newVals = fun.eval(newSamples);
+                [newVals, newTrajectories] = fun.eval(newSamples);
             else
                 % use current cov to standardize data
+                cholPrec = dist.getCholP()';
                 x = xl;
                 % centering of the y values before learning the GP has an
                 % impact on thompson sampling (exploration/exploitation)
@@ -25,31 +26,40 @@ classdef DensityWeightedBO_core_trajectory
                 y = (yl - yCentering) / std_yl;
                 
                 %hyper_param optim
-                [gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core.hyperParamOptim(x, y, gp, gp_rec, gpHyperOption, lambda);
+                [gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core_trajectory.hyperParamOptim(x, y, gp, gp_rec, gpHyperOption, lambda);
 
                 % use CMA-ES to maximize exp(thompson) * density acquisition
                 newSamples = zeros(lambda, length(dist.mu));
                 newVals = zeros(lambda, 1);
+                newTrajectories = cell(lambda,1);
                 for k = 1:lambda
-                    gp = static_optimization_algs.DensityWeightedBO_core.copyHyperParam(gp, gp_rec, k); 
+                    gp = static_optimization_algs.DensityWeightedBO_core_trajectory.copyHyperParam(gp, gp_rec, k); 
                     evalSamples = dist.getSamples(800);
                     if (beta < 0)  % if beta < 0: disgard samples too far away from mean 
                         probaThresh = -beta;
                         mahDistMu = pdist2(evalSamples, dist.mu, 'mahalanobis', dist.getCov) .^ 2;
                         cutOffDist = chi2inv(probaThresh, length(dist.mu));
                         evalSamples = evalSamples(mahDistMu < cutOffDist, :);
-                        vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, featureFunction);
+%                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);                        
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, size(evalSamples,1), dist.mu);
                     else % if beta >= 0: weight TS value with beta * distance to mean
-                        vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, featureFunction);
-                        vals = vals + beta * dist.getLogProbas(evalSamples);
+%                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);
+%                         vals = vals + beta * dist.getLogProbas(evalSamples);                        
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, size(evalSamples,1), dist.mu);
                     end
                     [~, argmax] = max(vals);
                     newSamples(k, :) = evalSamples(argmax, :);
-                    newVals(k) = fun.eval(newSamples(k, :));
+                    [newVals(k), newTrajectories{k,1}] = fun.eval(newSamples(k, :));
                     x = [x; (newSamples(k, :) - dist.mu) * cholPrec];
                     y = [y; (newVals(k) - yCentering) / std_yl];
                 end
             end            
+        end
+        
+        function vals = trajectoryGP(trajectoryData, x,y, numSamples, mu)
+            D = trajectoryCovariance(x, x, trajectoryData);
+            L = getLowerCholesky(D, y, trajectoryData, false);
+            vals = randn(numSamples, 1) * L + repmat(mu, numSamples, 1);
         end
        
         function gp = copyHyperParam(gp, gp_rec, k)

@@ -15,6 +15,7 @@
 %%%
 
 close all;
+clear variables;
 %clc;
 % set(0, 'DefaultFigureVisible', 'off')
 
