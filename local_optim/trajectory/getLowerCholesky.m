@@ -1,5 +1,4 @@
-function [L, alpha] = getLowerCholesky(D, knownY, opts, toHyper)
-    K = scaleKernel(D, opts);
+function [L, alpha] = getLowerCholesky(K, knownY, opts, toHyper)    
     alpha = [];
     hyperSigma = opts.hyperSigma;
     p = 1;

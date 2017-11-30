@@ -11,16 +11,18 @@ function D = trajectoryCovariance(Xm, Xn, trajectories, opts)
     
     for i = 1:m
         start = 1;
-        if prior
-            start = i;
-        end
+        if prior, start = i; end
         for j = start:n
             if all(Xm(i,:) == Xn(j,:))
                 D(i,j) = 0;
             else
-                traji = findTraj(Xm(i,:), trajectories);
-                trajj = findTraj(Xn(j,:), trajectories);
-                D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, opts);
+%                 traji = findTraj(Xm(i,:), trajectories);
+%                 trajj = findTraj(Xn(j,:), trajectories);
+                if prior
+                    D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
+                else
+                    D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), [], trajectories(j,:), opts);
+                end
             end
         end
     end

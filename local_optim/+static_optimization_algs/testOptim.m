@@ -56,6 +56,8 @@ addpath('trajectory');
 addpath('cartPole');
 func = cartPole();
 func.opts.hyperSigma = 1e-6;
+func.opts.hyper(1,1) = 1;
+func.opts.hyper(1,2) = 1;
 
 
 %% optimization algo
@@ -80,7 +82,8 @@ optimizers = {...
 %    static_optimization_algs.AdaptiveMoreStudentEntropy;
 %     static_optimization_algs.AdaptiveMoreStudent;
 %     static_optimization_algs.LocalBayes;
-    static_optimization_algs.DensityWeightedBO;
+%     static_optimization_algs.DensityWeightedBO;
+    static_optimization_algs.DensityWeightedBO_trajectory;
 %     static_optimization_algs.CMAESWrapper;
 %     static_optimization_algs.More;
 

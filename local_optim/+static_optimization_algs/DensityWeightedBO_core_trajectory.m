@@ -32,6 +32,11 @@ classdef DensityWeightedBO_core_trajectory
                 newSamples = zeros(lambda, length(dist.mu));
                 newVals = zeros(lambda, 1);
                 newTrajectories = cell(lambda,1);
+                
+                D = trajectoryCovariance(x, x, trajectories, fun.opts);
+                K = scaleKernel(D, fun.opts);
+                fun.opts.L = getLowerCholesky(K, y, fun.opts, false);
+                
                 for k = 1:lambda
                     gp = static_optimization_algs.DensityWeightedBO_core_trajectory.copyHyperParam(gp, gp_rec, k); 
                     evalSamples = dist.getSamples(800);
@@ -41,11 +46,11 @@ classdef DensityWeightedBO_core_trajectory
                         cutOffDist = chi2inv(probaThresh, length(dist.mu));
                         evalSamples = evalSamples(mahDistMu < cutOffDist, :);
 %                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);                        
-                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, fun.opts, size(evalSamples,1), dist.mu);
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, evalSamples, fun.opts);
                     else % if beta >= 0: weight TS value with beta * distance to mean
 %                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);
 %                         vals = vals + beta * dist.getLogProbas(evalSamples);                        
-                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, fun.opts, size(evalSamples,1), dist.mu);
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, evalSamples, fun.opts);
                     end
                     [~, argmax] = max(vals);
                     newSamples(k, :) = evalSamples(argmax, :);
@@ -56,10 +61,10 @@ classdef DensityWeightedBO_core_trajectory
             end            
         end
         
-        function vals = trajectoryGP(x,y, trajectories, opts, numSamples, mu)
-            D = trajectoryCovariance(x, x, trajectories, opts);
-            L = getLowerCholesky(D, y, opts, false);
-            vals = randn(numSamples, 1) * L + repmat(mu, numSamples, 1);
+        function vals = trajectoryGP(x,y, trajectories, samples, opts)            
+            [mean, variance] = gaussianProcess(samples, x, y, trajectories, opts);
+            covC = getLowerCholesky(variance, y, opts, false);
+            vals = mean + covC * randn(size(y,1), 1);
         end
        
         function gp = copyHyperParam(gp, gp_rec, k)
@@ -97,7 +102,7 @@ classdef DensityWeightedBO_core_trajectory
                     gp_rec = gp_previousRec;
                 end
             else
-                error('wrong hyperparm option in DensityWeightedBO');
+                error('wrong hyperparm option in DensityWeightedBO_trajectory');
             end
         end
     end
