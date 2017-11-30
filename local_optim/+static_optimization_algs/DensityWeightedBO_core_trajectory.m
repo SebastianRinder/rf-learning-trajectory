@@ -41,11 +41,11 @@ classdef DensityWeightedBO_core_trajectory
                         cutOffDist = chi2inv(probaThresh, length(dist.mu));
                         evalSamples = evalSamples(mahDistMu < cutOffDist, :);
 %                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);                        
-                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, size(evalSamples,1), dist.mu);
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, fun.opts, size(evalSamples,1), dist.mu);
                     else % if beta >= 0: weight TS value with beta * distance to mean
 %                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);
 %                         vals = vals + beta * dist.getLogProbas(evalSamples);                        
-                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, size(evalSamples,1), dist.mu);
+                        vals = static_optimization_algs.DensityWeightedBO_core_trajectory.trajectoryGP(x,y, trajectories, fun.opts, size(evalSamples,1), dist.mu);
                     end
                     [~, argmax] = max(vals);
                     newSamples(k, :) = evalSamples(argmax, :);
@@ -56,9 +56,9 @@ classdef DensityWeightedBO_core_trajectory
             end            
         end
         
-        function vals = trajectoryGP(trajectoryData, x,y, numSamples, mu)
-            D = trajectoryCovariance(x, x, trajectoryData);
-            L = getLowerCholesky(D, y, trajectoryData, false);
+        function vals = trajectoryGP(x,y, trajectories, opts, numSamples, mu)
+            D = trajectoryCovariance(x, x, trajectories, opts);
+            L = getLowerCholesky(D, y, opts, false);
             vals = randn(numSamples, 1) * L + repmat(mu, numSamples, 1);
         end
        

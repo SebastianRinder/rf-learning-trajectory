@@ -1,8 +1,8 @@
-function [finalReward, traj] = objectiveFcn(policy, opts)
-    traj.state = zeros(opts.timeSteps,size(opts.state0,2));
-    traj.action = zeros(opts.timeSteps,1);
-    traj.prob = zeros(opts.timeSteps,1);
-    traj.cumReward = zeros(opts.timeSteps,1);
+function [finalReward, trajectory] = objectiveFcn(policy, opts)
+    trajectory.state = zeros(opts.timeSteps,size(opts.state0,2));
+    trajectory.action = zeros(opts.timeSteps,1);
+    trajectory.prob = zeros(opts.timeSteps,1);
+    trajectory.cumReward = zeros(opts.timeSteps,1);
     
     cumReward = 0;    
     %probFac = 1;
@@ -22,17 +22,17 @@ function [finalReward, traj] = objectiveFcn(policy, opts)
         [reward, finished] = opts.rewardFcn(nextState, opts.bounds, i==opts.timeSteps);
 
         cumReward = cumReward + reward;
-        traj.state(i,:) = state;
-        traj.action(i,1) = action;
-        traj.prob(i,1) = optProb;
-        traj.cumReward(i,1) = cumReward;
+        trajectory.state(i,:) = state;
+        trajectory.action(i,1) = action;
+        trajectory.prob(i,1) = optProb;
+        trajectory.cumReward(i,1) = cumReward;
         
         if finished
-            traj.lastState = nextState;
-            traj.state(i+1:end,:) = [];
-            traj.action(i+1:end,:) = [];
-            traj.prob(i+1:end,:) = [];
-            traj.cumReward(i+1:end,:) = [];
+            trajectory.lastState = nextState;
+            trajectory.state(i+1:end,:) = [];
+            trajectory.action(i+1:end,:) = [];
+            trajectory.prob(i+1:end,:) = [];
+            trajectory.cumReward(i+1:end,:) = [];
             break;
         end
         state = nextState;

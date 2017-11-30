@@ -249,7 +249,7 @@ classdef More
                 entropy = newPol.getEntropy;
                 kl = newPol.getKL(initPolicy);
                 if(exist('verbose', 'var') && verbose == 1)
-                    fprintf('new reward %g, relative reward change %g, kl %g, entropy %g, entropy change %g\n', newReward, rewardImprovement, kl, entropy, entropy - initPolicy.getEntropy);
+                    fprintf('relative reward change %g, kl %g, entropy %g, entropy change %g\n', newReward, rewardImprovement, kl, entropy, entropy - initPolicy.getEntropy);
                 end
             end
         end

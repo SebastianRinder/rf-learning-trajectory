@@ -1,4 +1,4 @@
-function D = trajectoryCovariance(Xm, Xn, opts)
+function D = trajectoryCovariance(Xm, Xn, trajectories, opts)
     m = size(Xm,1);
     n = size(Xn,1);
     
@@ -18,8 +18,8 @@ function D = trajectoryCovariance(Xm, Xn, opts)
             if all(Xm(i,:) == Xn(j,:))
                 D(i,j) = 0;
             else
-                traji = findTraj(Xm(i,:), opts.trajectory);
-                trajj = findTraj(Xn(j,:), opts.trajectory);
+                traji = findTraj(Xm(i,:), trajectories);
+                trajj = findTraj(Xn(j,:), trajectories);
                 D(i,j) = trajectoryDistance(Xm(i,:), Xn(j,:), traji, trajj, opts);
             end
         end

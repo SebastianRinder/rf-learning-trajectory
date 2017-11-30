@@ -52,8 +52,10 @@ end
 % fname = [rootPlot 'objective_' funSignature];
 % hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
+addpath('trajectory');
 addpath('cartPole');
 func = cartPole();
+func.opts.hyperSigma = 1e-6;
 
 
 %% optimization algo
