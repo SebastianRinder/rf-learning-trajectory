@@ -35,7 +35,7 @@ classdef DensityWeightedBO_core_trajectory
                 
                 D = trajectoryCovariance(x, x, trajectories, fun.opts);
                 K = scaleKernel(D, fun.opts);
-                fun.opts.L = getLowerCholesky(K, y, fun.opts, false);
+                [fun.opts.L, fun.opts.alpha] = getLowerCholesky(K, y, fun.opts, false);
                 
                 for k = 1:lambda
                     gp = static_optimization_algs.DensityWeightedBO_core_trajectory.copyHyperParam(gp, gp_rec, k); 
@@ -57,14 +57,15 @@ classdef DensityWeightedBO_core_trajectory
                     [newVals(k), newTrajectories{k,1}] = fun.eval(newSamples(k, :));
                     x = [x; (newSamples(k, :) - dist.mu) * cholPrec];
                     y = [y; (newVals(k) - yCentering) / std_yl];
+                    trajectories = [trajectories; newTrajectories{k,1}];
                 end
             end            
         end
         
         function vals = trajectoryGP(x,y, trajectories, samples, opts)            
-            [mean, variance] = gaussianProcess(samples, x, y, trajectories, opts);
-            covC = getLowerCholesky(variance, y, opts, false);
-            vals = mean + covC * randn(size(y,1), 1);
+            [meanVec, ~, covarianceMat] = gaussianProcess(samples, x, y, trajectories, opts);
+            cholCov = getLowerCholesky(covarianceMat, [], opts, false);
+            vals = meanVec + cholCov * randn(size(samples,1), 1);
         end
        
         function gp = copyHyperParam(gp, gp_rec, k)
