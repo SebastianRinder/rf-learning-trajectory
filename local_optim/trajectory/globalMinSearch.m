@@ -7,7 +7,7 @@ function [xMin, yMin] = globalMinSearch(fcn, lb, ub)
         [xMin, yMin] = run(gs,problem);
     catch me
 %         surfFcn2D(fcn,lb,ub,100);
-        disp('Hyper: no min found');
+%         disp('Hyper: no min found');
         
         xMin = [];
         yMin = [];

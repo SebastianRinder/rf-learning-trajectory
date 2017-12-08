@@ -134,7 +134,7 @@ classdef DensityWeightedBO_trajectory
 %                 quadModel = static_optimization_algs.DensityWeightedBO.gaussToQuad(targetDistrib);
                 
                 % cma-es like: Sampled values
-                nbSamplesForTarget = length(localVals) / 2;
+                nbSamplesForTarget = length(localVals);
                 weights = log(nbSamplesForTarget + 1/2) - log(1:nbSamplesForTarget)'; % muXone array for weighted recombination
                 [~, sorted_idx] = sort(localVals, 1, 'descend');
                 targetDistribSamples = localSamples(sorted_idx(1:nbSamplesForTarget), :);
