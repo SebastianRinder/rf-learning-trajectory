@@ -17,7 +17,7 @@ function [finalReward, trajectory] = objectiveFcn(policy, opts)
     state = opts.state0;    
     
     for i=1:opts.timeSteps
-        [action, optProb] = opts.actionSelectionFcn(policy, state, [], opts.actionList);
+        [action, optProb] = opts.actionSelectionFcn(policy, state, [], opts);
         nextState = opts.simFcn(state, action, opts.bounds);        
         [reward, finished] = opts.rewardFcn(nextState, opts.bounds, i==opts.timeSteps);
 

@@ -1,6 +1,7 @@
 function [opts] = environmentSettings(env, visualize)
     if isequal(env, 'cartPole')
         opts.dim = 4;
+        opts.errorVariance = 1e-4;
         opts.actionList = [];	%continuous action selection
         opts.bounds.position = [-5, 5];
         opts.bounds.angle = [-90 * pi / 180, 90 * pi / 180];

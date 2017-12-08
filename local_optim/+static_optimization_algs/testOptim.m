@@ -55,7 +55,9 @@ end
 addpath('trajectory');
 addpath('cartPole');
 func = cartPole();
-func.opts.hyperSigma = 1e-6;
+% func.opts.policyBounds.lower = -1.*(ones(1,4));
+% func.opts.policyBounds.upper = ones(1,4);
+% func.opts.hyperSigma = 1e-6;
 func.opts.hyper(1,1) = 1;
 func.opts.hyper(1,2) = 1;
 

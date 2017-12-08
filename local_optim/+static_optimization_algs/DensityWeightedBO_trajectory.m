@@ -63,10 +63,12 @@ classdef DensityWeightedBO_trajectory
             localSamples = [];
             localVals = [];
             localTrajectories = [];
+            hyperTrace = [1,1];
+            
             for iter = 1:nbIter
                 neg_proba_thresh = -.8;
-                [newSamples, newVals, newtrajectory, gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core_trajectory.sample(currentDistrib, fun, nbSamplesPerIter, ...
-                    localSamples, localVals, localTrajectories, gp, gp_rec, neg_proba_thresh, gpHyperOption, featureFunction, yCenteringType);
+                [newSamples, newVals, newtrajectory, gp, hyperTrace] = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.sample(currentDistrib, fun, nbSamplesPerIter, ...
+                    localSamples, localVals, localTrajectories, gp, hyperTrace, neg_proba_thresh, gpHyperOption, featureFunction, yCenteringType);
                 
                 % STEP 2: evaluate and manage dataset
                 allVals = [allVals; newVals];
