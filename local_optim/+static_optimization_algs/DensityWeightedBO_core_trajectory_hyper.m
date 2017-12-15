@@ -36,7 +36,8 @@ classdef DensityWeightedBO_core_trajectory_hyper
                 newTrajectories = cell(lambda,1);
                 
                 D = trajectoryCovariance(x, x, trajectories, false, fun.opts);
-                hyperTrace = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.trajectoryHypers(hyperTrace,x,y,D);                    
+                %hyperTrace = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.trajectoryHypers(hyperTrace,x,y,D);                    
+                hyperTrace = [hyperTrace; 1,1];
                 fun.opts.hyper = hyperTrace(end,:);
                 
                 for k = 1:lambda

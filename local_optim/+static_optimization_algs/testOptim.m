@@ -1,3 +1,6 @@
+%hyper with sq exp
+%open ai gym
+
 %multivariate gaussian wikipedia
 %last chapter
 % or use Normal.m getSample
