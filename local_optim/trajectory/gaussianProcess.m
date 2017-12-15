@@ -6,7 +6,7 @@ function [meanVec, covarianceVec, covarianceMat] = gaussianProcess(testX, knownX
         meanVec = Ks' * alpha;      %Rasmussen, Williams 2005
 
     elseif nargout == 2
-        Kss = scaleKernel(0, opts);
+        Kss = scaleKernel(0, opts.hyper);
         Lk = L \ Ks;       
         meanVec = Lk' * (L \ knownY);
         covarianceVec = (Kss - sum(Lk.^2))';    %Python example, Nando de Freitas 2013

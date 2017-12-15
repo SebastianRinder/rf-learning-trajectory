@@ -69,21 +69,30 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
     D = (D1 + D2) / size(trajj, 2);
 end
 
-function D = closedForm(xi, xj, trajectory, opts)
+function D = closedForm(xi, xj, states, opts)
     D = 0;
-    l = 0;
-    for k = size(trajectory, 1):-1:1
-        traj = trajectory{k,1};
-        if l + length(traj.state) > 500
-            traj.state = traj.state(end-500+l:end,:);
-        end
-        [~,~,mu1] = opts.actionSelectionFcn(xi, traj.state, [], opts);
-        [~,~,mu2] = opts.actionSelectionFcn(xj, traj.state, [], opts);
-        muDiff = mu1 - mu2;
-        D = D + (muDiff' * muDiff) ./ length(traj.state);
-        l = l + length(traj.state);
-        if l > 500, break; end
+%     l = 0;
+%     for k = size(trajectory, 1):-1:1
+%         traj = trajectory{k,1};
+%         if l + length(traj.state) > 500
+%             traj.state = traj.state(end-500+l:end,:);
+%         end
+%         [~,~,mu1] = opts.actionSelectionFcn(xi, traj.state, [], opts);
+%         [~,~,mu2] = opts.actionSelectionFcn(xj, traj.state, [], opts);
+%         muDiff = mu1 - mu2;
+%         D = D + (muDiff' * muDiff) ./ length(traj.state);
+%         l = l + length(traj.state);
+%         if l > 500, break; end
+%     end
+
+    if size(states,1) > 500
+        states = states(randsample(size(states,1),500),:);
     end
+    
+    [~,~,mu1] = opts.actionSelectionFcn(xi, states, [], opts);
+    [~,~,mu2] = opts.actionSelectionFcn(xj, states, [], opts);
+    muDiff = mu1 - mu2;
+    D = D + (muDiff' * muDiff) ./ size(states,1);
     
     %D = D / (opts.errorVariance ^ 2);
     

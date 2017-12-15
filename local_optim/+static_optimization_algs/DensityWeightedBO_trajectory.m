@@ -75,6 +75,9 @@ classdef DensityWeightedBO_trajectory
                 storedSamples = [storedSamples; newSamples];
                 storedVals = [storedVals; newVals];
                 storedTrajectories = [storedTrajectories; newtrajectory];
+                
+                fprintf(['rewards ' ,num2str(newVals'), ', ']);
+                
                 % delete old samples
                 if(iter > maxIterReuse)
                     storedSamples = storedSamples(nbSamplesPerIter+1:end, :);
