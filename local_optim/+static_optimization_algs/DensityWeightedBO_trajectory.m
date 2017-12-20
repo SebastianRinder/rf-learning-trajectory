@@ -63,7 +63,7 @@ classdef DensityWeightedBO_trajectory
             localSamples = [];
             localVals = [];
             localTrajectories = [];
-            hyperTrace = [1,1];
+            hyperTrace = [];
             
             for iter = 1:nbIter
                 neg_proba_thresh = -.8;

@@ -11,5 +11,6 @@ function surfFcn2D(fcn,lb,ub,nrPoints)
     end
 
     surf(X1,X2,fVals);
+    alpha 0.5
     pause(0.1);
 end

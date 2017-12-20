@@ -40,6 +40,8 @@ function [opts] = environmentSettings(env, visualize)
         opts.simFcn = @simAcroBot;
         opts.rewardFcn = @rewardAcroBot;
         opts.visFcn = @visAcroBot;        
+    else
+        error(['no environment for ', env]);
     end
     
     opts.environment = env;

@@ -1,8 +1,8 @@
-function logLi = findLogHypers(logHyper, knownX, knownY, D)
-    K = scaleKernel(D, exp(logHyper));
+function logLi = findHypers(hyper, knownX, knownY, D, opts)
+    K = opts.scaleKernel(D, hyper);
     L = getLowerCholesky(K, knownY, true);
     
-    try
+%     try
         if ~isempty(L)
             like1 = 2*sum(log(diag(L)));    
             like2 = knownY' * (L'\(L \ knownY));
@@ -11,7 +11,7 @@ function logLi = findLogHypers(logHyper, knownX, knownY, D)
         else
             logLi = -Inf;
         end
-    catch me
-        disp('fail @ findLogHypers');
-    end
+%     catch me
+%         disp('fail @ findLogHypers');
+%     end
 end

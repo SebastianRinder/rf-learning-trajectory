@@ -1,52 +1,14 @@
-function D = trajectoryCovariance(Xm, Xn, trajectories, isCovMat, opts)
-    m = size(Xm,1);
-    n = size(Xn,1);
+function D = trajectoryDistanceOLD(xi, xj, traji, trajj, opts)    
     
-    D = zeros(m,n);    
-    
-    if m == n && all(all(Xm == Xn)) %symmetric = true
-        if ~isCovMat
-            for i = 1:m
-                for j = i:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = monteCarloEst(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
-                    end
-                end
-            end
-        else
-            states = [];
-            for i = 1:size(trajectories,1)
-                for j = 1:size(trajectories{i,1}) %only 1 policy per trajectory
-                    states = [states; trajectories{i,1}.state];
-                end
-            end
-            if size(states,1) > 500
-                states = states(randsample(size(states,1),500),:);
-            end
-            for i = 1:m
-                for j = i:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
-                    end
-                end
-            end
-        end
-        D = D + D';
+    if isempty(traji) && ~isempty(trajj)
+        D = importanceSampling(xi, trajj, opts);
         
-    else
-        for i = 1:m
-            for j = 1:n
-                if all(Xm(i,:) == Xn(j,:))
-                    D(i,j) = 0;
-                else
-                    D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
-                end
-            end
-        end
+	elseif ~isempty(traji) && ~isempty(trajj)
+        D = monteCarloEst(xi, xj, traji, trajj, opts);
+        
+    elseif ~isempty(traji) && isempty(trajj)
+        D = closedForm(xi, xj, traji, opts);
+        
     end
 end
 
@@ -108,10 +70,29 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
 end
 
 function D = closedForm(xi, xj, states, opts)
+    D = 0;
+%     l = 0;
+%     for k = size(trajectory, 1):-1:1
+%         traj = trajectory{k,1};
+%         if l + length(traj.state) > 500
+%             traj.state = traj.state(end-500+l:end,:);
+%         end
+%         [~,~,mu1] = opts.actionSelectionFcn(xi, traj.state, [], opts);
+%         [~,~,mu2] = opts.actionSelectionFcn(xj, traj.state, [], opts);
+%         muDiff = mu1 - mu2;
+%         D = D + (muDiff' * muDiff) ./ length(traj.state);
+%         l = l + length(traj.state);
+%         if l > 500, break; end
+%     end
+
+    if size(states,1) > 500
+        states = states(randsample(size(states,1),500),:);
+    end
+    
     [~,~,mu1] = opts.actionSelectionFcn(xi, states, [], opts);
     [~,~,mu2] = opts.actionSelectionFcn(xj, states, [], opts);
     muDiff = mu1 - mu2;
-    D = (muDiff' * muDiff) ./ size(states,1);
+    D = D + (muDiff' * muDiff) ./ size(states,1);
     
     %D = D / (opts.errorVariance ^ 2);
     

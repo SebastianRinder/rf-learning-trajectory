@@ -1,18 +1,11 @@
 function [xMin, yMin] = localMinSearch(fcn, dist, beta)
-    c = 1;
-%     while c
-%         x0 = dist.getSamples(1);
-%         c = nonlconFcn(x0);
-%     end
     
-    x0 = dist.mu;
-    
-    %options = optimoptions('fmincon','Display','iter');
+    options = optimoptions('fmincon','Display','off');
     
 %     try        
 %         warning off MATLAB:singularMatrix
 %         warning off MATLAB:nearlySingularMatrix
-        [xMin, yMin] = fmincon(fcn, x0, [],[],[],[],[],[], @nonlconFcn); %, options);
+        [xMin, yMin] = fmincon(fcn, dist.mu, [],[],[],[],[],[], @nonlconFcn, options);
 %         warning on MATLAB:singularMatrix
 %         warning on MATLAB:nearlySingularMatrix
 %     catch me

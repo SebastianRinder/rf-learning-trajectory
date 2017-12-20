@@ -35,16 +35,16 @@ classdef DensityWeightedBO_core_trajectory_hyper
                 newVals = zeros(lambda, 1);
                 newTrajectories = cell(lambda,1);
                 
-                D = trajectoryCovariance(x, x, trajectories, false, fun.opts);
-                %hyperTrace = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.trajectoryHypers(hyperTrace,x,y,D);                    
-                hyperTrace = [hyperTrace; 1,1];
+                D = fun.opts.distanceMat(x, x, trajectories, false, fun.opts);
+                hyperTrace = [hyperTrace; static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.optimizeHypers(hyperTrace,x,y,D, fun.opts)];                    
+                %hyperTrace = [hyperTrace; 0,0];
                 fun.opts.hyper = hyperTrace(end,:);
                 
                 for k = 1:lambda
                     if k > 1
-                        D = trajectoryCovariance(x, x, trajectories, false, fun.opts);
+                        D = fun.opts.distanceMat(x, x, trajectories, false, fun.opts);
                     end
-                    K = scaleKernel(D, fun.opts.hyper);                    
+                    K = fun.opts.scaleKernel(D, fun.opts.hyper);                    
                     [L, alpha] = getLowerCholesky(K, y, false);                    
                     
 %                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.maxThompsonSampling(x,y, trajectories, L, alpha, dist, beta, fun.opts);
@@ -83,22 +83,23 @@ classdef DensityWeightedBO_core_trajectory_hyper
             newSample = evalSamples(argmax, :);
         end
         
-        function hyperTrace = trajectoryHypers(hyperTrace,x,y,D)
-            if size(hyperTrace,1) == 1
-                hyperLb(1:2) = -20;
-                hyperUb(1:2) = 20;
+        function hypers = optimizeHypers(hyperTrace,x,y,D, opts)
+            if isempty(hyperTrace)
+                hyperLb(1:2) = -15;
+                hyperUb(1:2) = 15;
+                hyperTrace = [0,0];
             else
-                hyperLb(1:2) = log(hyperTrace(end,1:2)) - 7;
-                hyperUb(1:2) = log(hyperTrace(end,1:2)) + 7;
+                hyperLb(1:2) = hyperTrace(end,1:2) - 7;
+                hyperUb(1:2) = hyperTrace(end,1:2) + 7;
             end
+%             hyperLb(1:2) = [-10, -40];
+%             hyperUb(1:2) = [10,1];
 
-            negLogHyperFcn = @(X) -findLogHypers(X, x, y, D);
-            logHyper = globalMinSearch(negLogHyperFcn, hyperLb, hyperUb);
-            if isempty(logHyper)
-                hyperTrace = [hyperTrace; hyperTrace(end,:)];
-            else
-                hyperTrace = [hyperTrace; exp(logHyper)];
-            end
+            negHyperFcn = @(X) log(-findHypers(X, x, y, D, opts));
+            hypers = globalMinSearch(negHyperFcn, hyperLb, hyperUb);
+            
+            hypers(1,hypers == 0) = hyperTrace(end,hypers == 0);
+            
         end
     end
 end
