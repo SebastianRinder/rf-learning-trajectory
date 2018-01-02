@@ -55,7 +55,7 @@ addpath('trajectory');
 addpath('cartPole');
 %func = gpOptions('sexp','cartPole');
 func = gpOptions('matern52','cartPole');
-%func = gpOptions('trajectory','cartPole');
+% func = gpOptions('trajectory','cartPole');
 func.opts.trajectoriesPerPolicy = 1;
 
 
@@ -146,8 +146,8 @@ optimizerInput.featureFunction = [];
 optimizerInput.featureName = 'noFeature';
 % optimizerInput.featureName = 'quadratic';
 
-% optimizerInput.yCenteringType = 'min';
-optimizerInput.yCenteringType = 'mean';
+% optimizerInput.yCenteringType = 'min'; %EI maybe
+optimizerInput.yCenteringType = 'mean'; %thompson sampling
 % optimizerInput.yCenteringType = 'max';
 
 optimizerInput.videoFile = [];

@@ -14,13 +14,16 @@ classdef gpOptions < handle
                 obj.opts.distanceMat = @obj.squaredDist;
                 obj.opts.scaleKernel = @obj.matern52ScaleKernel;
             elseif strcmp(kernelName, 'trajectory')
-                obj.opts.distanceMat = trajectoryDistance;
+                obj.opts.distanceMat = @obj.trajectoryDistance;
                 obj.opts.scaleKernel = @obj.trajectoryScaleKernel;
             else
                 error(['no covariance function for ', kernelName]);
             end
         end
         
+        function D = trajectoryDistance(obj, a,b,c,d,e)
+            D= trajectoryDistance(a,b,c,d,e);
+        end
         
         function [sigmaf, sigmal] = expHyper(obj, hyper)
             sigmaf = exp(hyper(1,1));

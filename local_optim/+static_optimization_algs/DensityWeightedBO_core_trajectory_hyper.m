@@ -47,8 +47,8 @@ classdef DensityWeightedBO_core_trajectory_hyper
                     K = fun.opts.scaleKernel(D, fun.opts.hyper);                    
                     [L, alpha] = getLowerCholesky(K, y, false);                    
                     
-%                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.maxThompsonSampling(x,y, trajectories, L, alpha, dist, beta, fun.opts);
-                    newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.maxExpectedImprovement(x,y, trajectories, L, alpha, dist, beta, fun.opts);
+                    newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.maxThompsonSamplingFmin(x,y, trajectories, L, alpha, dist, beta, fun.opts);
+%                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.maxExpectedImprovement(x,y, trajectories, L, alpha, dist, beta, fun.opts);
                     
                     [newVals(k), newTrajectories(k,1)] = fun.eval(newSamples(k, :));
                     x = [x; (newSamples(k, :) - dist.mu) * cholPrec];
@@ -83,14 +83,19 @@ classdef DensityWeightedBO_core_trajectory_hyper
             newSample = evalSamples(argmax, :);
         end
         
+        function newSample = maxThompsonSamplingFmin(x,y, trajectories, L, alpha, dist, beta, opts)
+            negTSFcn = @(testX) -thompsonSample(testX, x, y, trajectories, L, alpha, opts);
+            newSample = localMinSearch(negTSFcn, dist, beta);
+        end
+        
         function hypers = optimizeHypers(hyperTrace,x,y,D, opts)
             if isempty(hyperTrace)
                 hyperLb(1:2) = -15;
                 hyperUb(1:2) = 15;
                 hyperTrace = [0,0];
             else
-                hyperLb(1:2) = hyperTrace(end,1:2) - 7;
-                hyperUb(1:2) = hyperTrace(end,1:2) + 7;
+                hyperLb(1:2) = hyperTrace(end,1:2) - 10;
+                hyperUb(1:2) = hyperTrace(end,1:2) + 10;
             end
 %             hyperLb(1:2) = [-10, -40];
 %             hyperUb(1:2) = [10,1];
