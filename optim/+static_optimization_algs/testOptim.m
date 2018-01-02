@@ -1,4 +1,4 @@
-%hyper with sq exp
+%hypernoise = std(y)/sqrt(2)
 %open ai gym
 
 %clear variables;

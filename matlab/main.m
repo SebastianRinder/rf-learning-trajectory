@@ -1,11 +1,6 @@
 function ret = main()
     addpath('fromMatlab');
-    %one slide motivation
-    %two slides bo
-    %two/three slides traj kernel
-    %two slides experiments
-    %one slide future work
-               
+                   
     %look for error variance in action selection and noise
     %use global min instead 10000 rnd
     
@@ -87,8 +82,7 @@ function ret = main()
             for j = 1:opts.trajectoriesPerPolicy
                 [allY(i,j), opts.trajectory.data{i,j}] = objectiveFcn(opts.trajectory.policy(i,:), opts);
             end
-%             errorNoise = randn(1, opts.trajectoriesPerPolicy) .* opts.hyperN;
-%             knownY(i,1) = mean(allF(i,:) + errorNoise); %Bishop 2006
+
             knownY(i,1) = mean(allY(i,:));
             if knownY(i,1) > 1300
                 disp('crfail');

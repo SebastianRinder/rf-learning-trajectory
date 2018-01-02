@@ -4,7 +4,7 @@ function [L, alpha] = getLowerCholesky(K, knownY, toHyper)
     if hyperSigma == 0
         hyperSigma = 1;
     end
-    
+    fitrgp
     p = 1;
     doublings = 0;
     while p > 0 && doublings < 100
