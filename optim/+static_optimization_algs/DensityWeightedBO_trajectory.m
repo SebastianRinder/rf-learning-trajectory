@@ -67,7 +67,7 @@ classdef DensityWeightedBO_trajectory
             
             for iter = 1:nbIter
                 neg_proba_thresh = -.8;
-                [newSamples, newVals, newtrajectory, gp, hyperTrace] = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.sample(currentDistrib, fun, nbSamplesPerIter, ...
+                [newSamples, newVals, newtrajectory, gp, hyperTrace] = static_optimization_algs.DensityWeightedBO_core_trajectory.sample(currentDistrib, fun, nbSamplesPerIter, ...
                     localSamples, localVals, localTrajectories, gp, hyperTrace, neg_proba_thresh, gpHyperOption, featureFunction, yCenteringType);
                 
                 % STEP 2: evaluate and manage dataset
@@ -78,7 +78,7 @@ classdef DensityWeightedBO_trajectory
                 
                 fprintf('%g%%: ', round(iter .* 100 ./ nbIter));
                 fprintf(['rewards ' ,num2str(newVals'), ', ']);
-                
+                                
                 % delete old samples
                 if(iter > maxIterReuse)
                     storedSamples = storedSamples(nbSamplesPerIter+1:end, :);

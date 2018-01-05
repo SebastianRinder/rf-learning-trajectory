@@ -1,12 +1,17 @@
-function [EI, mean, variance] = expectedImprovement(testX, knownX, knownY, trajectories, L, alpha, opts)
+function [EI, mean, variance] = expectedImprovement(testX, knownX, trajectories, L, alpha, func, bestY)
     if ~isempty(L)
-        [mean, variance] = gaussianProcess(testX, knownX, knownY, trajectories, L, alpha, opts);
+        [mean, variance] = gaussianProcess(testX, knownX, trajectories, L, alpha, func);
 
-        stdY = sqrt(max(0,variance));    
-        v = (mean - max(knownY)) ./ stdY; %Brochu 2010
-        EI = stdY .* (v .* normcdf(v) + normpdf(v));
+        EI = zeros(size(mean));
+        
+        stdY = sqrt(max(0,variance)); %avoid complex numbers
+        v = (mean - bestY - 0.01) ./ stdY; %Brochu 2010
+        v(stdY <= 0) = 0;
+        %EI(stdy > 0) = stdY .* (v .* normcdf(v) + normpdf(v));
+        EI = (mean - bestY - 0.01).*normcdf(v) + stdY.*normpdf(v);
+        EI(stdY <= 0) = 0;
 
-        EI(isnan(EI)) = 0;
+        %EI(isnan(EI)) = -Inf;
     else
         disp('ei fail');
         EI(1:size(testX,1),1) = 0;

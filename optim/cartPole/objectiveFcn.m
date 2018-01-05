@@ -7,10 +7,11 @@ function [finalReward, trajectory] = objectiveFcn(policy, opts)
     cumReward = 0;    
     %probFac = 1;
     if isequal(opts.environment, 'cartPole')
-        angle = randn * 0.01;
-        s = sign(angle);
-        if s == 0, s = 1; end
-        opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
+        opts.state0 = rand(1,5) * 0.1 - 0.05;
+%         angle = randn * 0.01;
+%         s = sign(angle);
+%         if s == 0, s = 1; end
+%         opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
         
         %probFac = 1/sqrt(1e-4.*2.*pi);
     end

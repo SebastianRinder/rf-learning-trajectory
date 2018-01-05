@@ -1,3 +1,5 @@
+%% author: Sebastian Rinder
+
 function val = thompsonSample(testX, knownX, knownY, trajectories, L, alpha, opts)
     persistent sampleX;
     persistent sampleY;

@@ -1,20 +1,16 @@
-function [L, alpha] = getLowerCholesky(K, knownY, toHyper)    
+function [L, alpha] = getLowerCholesky(K, knownY, calcHyper, sigmaNoiseSquared)    
     alpha = [];    
-    hyperSigma = mean(std(knownY,0,2).^2);
-    if hyperSigma == 0
-        hyperSigma = 1;
-    end
-    fitrgp
+    
     p = 1;
     doublings = 0;
     while p > 0 && doublings < 100
-        Knoise = K + hyperSigma.*eye(size(K));
+        Knoise = K + sigmaNoiseSquared.*eye(size(K));
         [L,p] = chol(Knoise, 'lower');
         if p > 0
             L = [];
-            if ~toHyper
+            if ~calcHyper
                 doublings = doublings + 1;
-                hyperSigma = hyperSigma * 2;
+                sigmaNoiseSquared = sigmaNoiseSquared * 2;
             else
                 break;
             end

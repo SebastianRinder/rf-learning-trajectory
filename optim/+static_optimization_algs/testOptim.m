@@ -1,4 +1,3 @@
-%hypernoise = std(y)/sqrt(2)
 %open ai gym
 
 %clear variables;
@@ -47,17 +46,22 @@ end
 % %%% plotting objective
 % hnd = figure(1);
 % func.plot();
- funSignature = ['cartPole'];
+xp = 'CartpoleTrajLocal';
+delete(['ret',xp,'.mat']);
+funSignature = xp;
 % fname = [rootPlot 'objective_' funSignature];
 % hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
-addpath('trajectory');
+addpath('auxiliary');
 addpath('cartPole');
 %func = gpOptions('sexp','cartPole');
-func = gpOptions('matern52','cartPole');
+func = problemOptions('trajectory','cartPole');
 % func = gpOptions('trajectory','cartPole');
-func.opts.trajectoriesPerPolicy = 1;
-
+func.opts.trajectoriesPerSample = 1;
+func.opts.hyper = [0,0];
+func.opts.hyperPlot = 0;
+func.opts.acquisitionPlot = 0;
+func.opts.useGADSToolbox = 0;
 
 %% optimization algo
 optimizers = {...
@@ -110,7 +114,7 @@ optimizerInput.epsiKL = .05;
 optimizerInput.entropyReduction = .05;
 optimizerInput.nbSamplesPerIter = 6;
 optimizerInput.nbInitSamples = 5;
-optimizerInput.nbIter = 100;
+optimizerInput.nbIter = 200;
 optimizerInput.maxEvals = 500; %cmaes wrapper only depends on this.
 %optimizerInput.maxIterReuse = optimizerInput.nbIter;
 optimizerInput.maxIterReuse = 30;
@@ -155,29 +159,39 @@ optimizerInput.videoFile = [];
 seed = rng;
 seedStartOpt = seed.State(2)
 
-for k = 1:length(optimizers)
-    rng(seedStartOpt);
-    all_signatures{end+1} = [optimizers{k}.getSignature(optimizerInput) '_' funSignature];
-%     optimizerInput.videoFile = VideoWriter([rootPlot 'policy_search_' all_signatures{end}]);%, 'Uncompressed AVI');
-%     optimizerInput.videoFile.FrameRate = 4;
-    disp(['starting ' all_signatures{end}]);
-    tic
-    [all_perfs{end+1}] = optimizers{k}.optimizeStruct(optimizerInput, func);
-    toc
+% for k = 1:length(optimizers)
+%     rng(seedStartOpt);
+%     all_signatures{end+1} = [optimizers{k}.getSignature(optimizerInput) '_' funSignature];
+% %     optimizerInput.videoFile = VideoWriter([rootPlot 'policy_search_' all_signatures{end}]);%, 'Uncompressed AVI');
+% %     optimizerInput.videoFile.FrameRate = 4;
+%     disp(['starting ' all_signatures{end}]);
+%     tic
+%     [all_perfs{end+1}] = optimizers{k}.optimizeStruct(optimizerInput, func);
+%     toc
+% end
+
+trials = 32;
+delete(gcp('nocreate')); %shut down previously created parpool
+parpool(trials);
+parfor trial=1:trials
+    ret{trial,1}.knownY = optimizers{1}.optimizeStruct(optimizerInput, func);
 end
 
+save(['ret',xp,'.mat'],'ret');
+delete(gcp('nocreate'));
+
 %% performance plotting
-fname = [rootPlot 'perfOn_' funSignature '_' all_signatures{1}];
-hnd = figure(5);
-hold on;
-for k = 1:length(optimizers)
-    plot(all_perfs{k});
-    perfs = all_perfs{k};
-end
-legHnd = legend(all_signatures{:}, 'Location','southeast');
-set(legHnd, 'interpreter', 'none');
-set(legHnd, 'FontSize', 7);
-hgexport(hnd, [fname '.eps']);
+% fname = [rootPlot 'perfOn_' funSignature '_' all_signatures{1}];
+% hnd = figure(5);
+% hold on;
+% for k = 1:length(optimizers)
+%     plot(all_perfs{k});
+%     perfs = all_perfs{k};
+% end
+% legHnd = legend(all_signatures{:}, 'Location','southeast');
+% set(legHnd, 'interpreter', 'none');
+% set(legHnd, 'FontSize', 7);
+% hgexport(hnd, [fname '.eps']);
 
 %% kl plotting
 % fname = [rootPlot 'klOn_' funSignature '_' all_signatures{1}];

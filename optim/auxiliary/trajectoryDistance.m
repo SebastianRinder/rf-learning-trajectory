@@ -92,11 +92,8 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
     D2 = 0;
     for k = 1:size(trajj, 2)
         traj = trajj{1,k};
-        try
-            [~,probi] = opts.actionSelectionFcn(xi, traj.state, traj.action, opts);
-        catch me
-            disp('fail');
-        end
+        
+        [~,probi] = opts.actionSelectionFcn(xi, traj.state, traj.action, opts);
         if isequal(opts.environment, 'cartPole')
             D2 = D2 + sum(traj.prob - probi) ./ length(traj.state);
         else
@@ -108,10 +105,6 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
 end
 
 function D = closedForm(xi, xj, states, opts)
-    if size(states,1) > 500
-        states = states(randsample(size(states,1),500),:);
-    end
-    
     [~,~,mu1] = opts.actionSelectionFcn(xi, states, [], opts);
     [~,~,mu2] = opts.actionSelectionFcn(xj, states, [], opts);
     muDiff = mu1 - mu2;
