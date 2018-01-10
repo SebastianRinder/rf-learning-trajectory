@@ -17,7 +17,7 @@ function [xMin, fMin] = globalMinSearch(fcn, lb, ub, useGADSToolbox, hyperSearch
     else
         xRand = randBound(lb,ub,10000);
         if hyperSearch            
-            for i=1:1000
+            for i=1:10000
                 fRand(i,1) = fcn(xRand(i,:));
             end
         else

@@ -25,10 +25,6 @@ classdef DensityWeightedBO_core_trajectory
 %                 std_yl = 1;
                 y = (yl - yCentering) / std_yl;
                 
-                %hyper_param optim
-                %[gp, gp_rec] = static_optimization_algs.DensityWeightedBO_core_trajectory.hyperParamOptim(x, y, gp, gp_rec, gpHyperOption, lambda);
-                
-                
 
                 % use CMA-ES to maximize exp(thompson) * density acquisition
                 newSamples = zeros(lambda, length(dist.mu));
@@ -44,14 +40,13 @@ classdef DensityWeightedBO_core_trajectory
                 
                 
                 for k = 1:lambda
-                    if k > 1
-                        D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
-                    end
-                    [L, alpha] = getLowerCholesky(D, y, false, func.opts.sigmaNoiseSquared);
-                    bestY = max(y);
-                    
-%                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSamplingFmin(x, trajectories, L, alpha, dist, beta, func, bestY);
-                    newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxExpectedImprovement(x, trajectories, L, alpha, dist, beta, func, bestY);
+                    newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSamplingFmin(x, y, trajectories, dist, beta, func);
+%                     if k > 1
+%                         D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
+%                     end
+%                     [L, alpha] = getLowerCholesky(D, y, false, func.opts.sigmaNoiseSquared);
+%                     bestY = max(y);
+%                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxExpectedImprovement(x, trajectories, L, alpha, dist, beta, func, bestY);
                     
                     [newVals(k), newTrajectories(k,1)] = func.eval(newSamples(k, :));
                     x = [x; (newSamples(k, :) - dist.mu) * cholPrec];
@@ -74,32 +69,31 @@ classdef DensityWeightedBO_core_trajectory
                 pause(0.1);
             end
         end
-        
-        function newSample = maxThompsonSampling(x,y, trajectories, L, alpha, dist, beta, opts)
-            evalSamples = dist.getSamples(800);
-            if (beta < 0)  % if beta < 0: disgard samples too far away from mean 
-                probaThresh = -beta;
-                mahDistMu = pdist2(evalSamples, dist.mu, 'mahalanobis', dist.getCov) .^ 2;
-                cutOffDist = chi2inv(probaThresh, length(dist.mu));
-                evalSamples = evalSamples(mahDistMu < cutOffDist, :);
-                [meanVec, ~, covarianceMat] = gaussianProcess(evalSamples, x, y, trajectories, L, alpha, opts);
-                cholCov = getLowerCholesky(covarianceMat, y, false);
-                vals = meanVec + cholCov * randn(size(evalSamples,1), 1);
-            else % if beta >= 0: weight TS value with beta * distance to mean
-                keyboard;
-%                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);
-%                         vals = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.trajectoryGP(x,y, trajectories, evalSamples, L, alpha, fun.opts);
-%                         vals = vals + beta * dist.getLogProbas(evalSamples);
-            end
-            [~, argmax] = max(vals);
-            newSample = evalSamples(argmax, :);
+
+        function newSample = maxThompsonSamplingFmin(x, y, trajectories, dist, beta, func)
+            clear thompsonSample;   %clear persistent variables 
+            negTSFcn = @(testX) -thompsonSample(testX, x, y, trajectories, func);
+            newSample = localMinSearch(negTSFcn, dist, beta);            
         end
         
-        function newSample = maxThompsonSamplingFmin(x,y, trajectories, L, alpha, dist, beta, opts)
-            negTSFcn = @(testX) -thompsonSample(testX, x, y, trajectories, L, alpha, opts);
-            newSample = localMinSearch(negTSFcn, dist, beta);
-        end
-        
-        
+%         function newSample = maxThompsonSampling(x,y, trajectories, L, alpha, dist, beta, opts)
+%             evalSamples = dist.getSamples(800);
+%             if (beta < 0)  % if beta < 0: disgard samples too far away from mean 
+%                 probaThresh = -beta;
+%                 mahDistMu = pdist2(evalSamples, dist.mu, 'mahalanobis', dist.getCov) .^ 2;
+%                 cutOffDist = chi2inv(probaThresh, length(dist.mu));
+%                 evalSamples = evalSamples(mahDistMu < cutOffDist, :);
+%                 [meanVec, ~, covarianceMat] = gaussianProcess(evalSamples, x, y, trajectories, L, alpha, opts);
+%                 cholCov = getLowerCholesky(covarianceMat, y, false);
+%                 vals = meanVec + cholCov * randn(size(evalSamples,1), 1);
+%             else % if beta >= 0: weight TS value with beta * distance to mean
+%                 keyboard;
+% %                         vals = static_optimization_algs.GP.gpRandTrans(gp, x, y, evalSamples, dist.mu, cholPrec, []);
+% %                         vals = static_optimization_algs.DensityWeightedBO_core_trajectory_hyper.trajectoryGP(x,y, trajectories, evalSamples, L, alpha, fun.opts);
+% %                         vals = vals + beta * dist.getLogProbas(evalSamples);
+%             end
+%             [~, argmax] = max(vals);
+%             newSample = evalSamples(argmax, :);
+%         end
     end
 end

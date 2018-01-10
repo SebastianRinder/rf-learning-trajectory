@@ -17,6 +17,10 @@ function [L, alpha] = getLowerCholesky(K, knownY, calcHyper, sigmaNoiseSquared)
         end        
     end
     
+%     if doublings > 0
+%         disp(sigmaNoiseSquared);
+%     end
+    
     if nargout > 1 && ~isempty(L)
         alpha = L'\(L \ knownY);        %Rasmussen, Williams 2005
     end

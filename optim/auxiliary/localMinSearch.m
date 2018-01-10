@@ -1,6 +1,6 @@
 function [xMin, yMin] = localMinSearch(fcn, dist, beta)
     
-    options = optimoptions('fmincon','Display','off');
+    options = optimoptions('fmincon','Display','iter');
     
 %     try        
 %         warning off MATLAB:singularMatrix

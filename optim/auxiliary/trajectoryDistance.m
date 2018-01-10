@@ -1,11 +1,11 @@
-function D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts)
+function D = trajectoryDistance(Xm, Xn, trajectories, isThompsonsSample, opts)
     m = size(Xm,1);
     n = size(Xn,1);
     
     D = zeros(m,n);    
     
     if m == n && all(all(Xm == Xn)) %symmetric = true
-        if ~isCovMat
+        if ~isThompsonsSample
             for i = 1:m
                 for j = i:n
                     if all(Xm(i,:) == Xn(j,:))
@@ -17,10 +17,8 @@ function D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts)
             end
         else
             states = [];
-            for i = 1:size(trajectories,1)
-                for j = 1:size(trajectories{i,1}) %only 1 policy per trajectory
-                    states = [states; trajectories{i,1}.state];
-                end
+            for i = 1:size(trajectories,1) %only 1 sample per trajectory
+                states = [states; trajectories{i,1}.state]; %------------select randperm -> break > 500
             end
             if size(states,1) > 500
                 states = states(randsample(size(states,1),500),:);
@@ -38,14 +36,36 @@ function D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts)
         D = D + D';
         
     else
-        for i = 1:m
-            for j = 1:n
-                if all(Xm(i,:) == Xn(j,:))
-                    D(i,j) = 0;
-                else
-                    D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
+        
+        if ~isThompsonsSample
+            for i = 1:m
+                for j = 1:n
+                    if all(Xm(i,:) == Xn(j,:))
+                        D(i,j) = 0;
+                    else
+                        D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
+                    end
                 end
             end
+        else
+            
+            states = [];
+            for i = 1:size(trajectories,1) %only 1 sample per trajectory
+                states = [states; trajectories{i,1}.state]; %------------select randperm -> break > 500
+            end
+            if size(states,1) > 500
+                states = states(randsample(size(states,1),500),:);
+            end
+            for i = 1:m
+                for j = 1:n
+                    if all(Xm(i,:) == Xn(j,:))
+                        D(i,j) = 0;
+                    else
+                        D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
+                    end
+                end
+            end
+            
         end
     end
 end

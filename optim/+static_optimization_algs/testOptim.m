@@ -171,9 +171,9 @@ seedStartOpt = seed.State(2)
 % end
 
 trials = 32;
-delete(gcp('nocreate')); %shut down previously created parpool
-parpool(trials);
-parfor trial=1:trials
+% delete(gcp('nocreate')); %shut down previously created parpool
+% parpool(trials);
+for trial=1:trials
     ret{trial,1}.knownY = optimizers{1}.optimizeStruct(optimizerInput, func);
 end
 

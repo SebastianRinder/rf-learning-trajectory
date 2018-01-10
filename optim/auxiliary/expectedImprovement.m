@@ -1,8 +1,6 @@
 function [EI, mean, variance] = expectedImprovement(testX, knownX, trajectories, L, alpha, func, bestY)
     if ~isempty(L)
-        [mean, variance] = gaussianProcess(testX, knownX, trajectories, L, alpha, func);
-
-        EI = zeros(size(mean));
+        [mean, variance] = gaussianProcess(testX, knownX, trajectories, L, alpha, false, func);
         
         stdY = sqrt(max(0,variance)); %avoid complex numbers
         v = (mean - bestY - 0.01) ./ stdY; %Brochu 2010

@@ -1,25 +1,41 @@
 %% author: Sebastian Rinder
 
+
 function ret = testGlobalBO()
+    loop = 1;
+    while loop
+        try
+            delete(gcp('nocreate')); %shut down previously created parpool
+            parpool(32);
+            ret = licenceLoopGlobalBO();
+            loop = 0;
+        catch me
+            %disp(me.message);
+            pause(30);
+            loop = 1;
+        end
+    end
+end
+
+function ret = licenceLoopGlobalBO()
     %dbstop if error
     %xp = 'CartpoleSexp';
-    xp = 'CartpoleTraj1';
+    xp = 'CartpoleTraj';
     
     delete(['ret',xp,'.mat']);
 
     addpath('auxiliary');
     addpath('cartPole');
                
-    trials = 1;
+    trials = 32;
     bayOptSteps = 200;
     initialSamples = 10;
         
     useMaxMean = 0; % if the environment is very noisy use maximum mean of the GP instead of max(knownY) in the expected improvement (Brochu 2010)
     
     ret = cell(trials,1);
-%     delete(gcp('nocreate')); %shut down previously created parpool
-%     parpool(trials);
-    for trial = 1:trials
+    
+    parfor trial = 1:trials
         tic
         allY = [];
         knownY = [];
@@ -29,7 +45,7 @@ function ret = testGlobalBO()
         
         func = problemOptions('trajectory','cartPole');
         func.opts.hyper = [0,0];
-        func.opts.trajectoriesPerSample = 5;
+        func.opts.trajectoriesPerSample = 1;
         func.opts.hyperPlot = 0;
         func.opts.acquisitionPlot = 0;
         func.opts.useGADSToolbox = 0;
@@ -49,7 +65,7 @@ function ret = testGlobalBO()
             y = (knownY - mean(knownY))./std(knownY);
             %func.opts.sigmaNoiseSquared = max(mean(std(allY,0,2)).^2, 1e-6);
             %func.opts.sigmaNoiseSquared = max(std(knownY)/sqrt(2), 1); %from matlab
-            func.opts.sigmaNoiseSquared = 1/sqrt(2);
+            func.opts.sigmaNoiseSquared = 0.2;  %from matlab bayesopt: std(y) / 5
             D = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
             func.opts.hyper = optimizeHyper(samples,y,D, func.opts);
 %             func.opts.hyper = [0,0];
@@ -64,7 +80,8 @@ function ret = testGlobalBO()
             else
                 bestY = max(y);
             end           
-                        
+            
+            func.opts.sigmaNoiseSquared = 0.2;%1e-6;
             negAcqFcn = @(testX) -expectedImprovement(testX, samples, trajectories, L, alpha, func, bestY);
             samples(i,:) = globalMinSearch(negAcqFcn, lb, ub, func.opts.useGADSToolbox, false);
             if func.opts.acquisitionPlot
