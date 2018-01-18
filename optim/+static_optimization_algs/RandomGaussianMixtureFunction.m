@@ -4,6 +4,7 @@ classdef RandomGaussianMixtureFunction < handle
         signature;
         allEvals = [];
         allSamples = [];
+        opts;
     end
     
     methods

@@ -2,12 +2,15 @@
 
 classdef problemOptions < handle
     properties
+        maxExp;
         opts;
     end
     
     methods
-        function obj = problemOptions(kernelName, environment)            
-            obj.opts = environmentSettings(environment, 'none');
+        function obj = problemOptions(kernelName, platform, environment)    
+            obj.maxExp = 100;
+            obj.opts = environmentSettings(environment, platform, 'none');
+            obj.opts.platform = platform;
             
             if strcmp(kernelName, 'sexp')
                 obj.opts.distanceMat = @obj.euclideanDistance;
@@ -23,68 +26,67 @@ classdef problemOptions < handle
             end
         end
         
-        function D = euclideanDistance(obj, Xm, Xn, ~, ~, ~)
-            m = size(Xm,1);
-            n = size(Xn,1);
-
-            D = zeros(m,n);
-            
-            if m==n && all(all(Xm == Xn))
-                for i=1:size(Xm,1)
-                    D(i,i) = 0;
-                    k = i+1;
-                    for j=k:size(Xn,1)
-                        r = Xm(i,:) - Xn(j,:);
-                        D(i,j) = r*r';
-                    end
-                end
-                D = sqrt(D + D');
-            else
-                for i=1:size(Xm,1)
-                    for j=1:size(Xn,1)
-                        r = Xm(i,:) - Xn(j,:);
-                        D(i,j) = r*r';
-                    end
-                end
-                D = sqrt(D);
-            end
-
-            %pdist2(Xm,Xn); %licence error on cluster
+        function D = euclideanDistance(obj, Xm, Xn, trajectories, isCovMat, opts)
+            D = euclideanDistance(Xm, Xn);
         end
         
         function D = trajectoryDistance(obj, Xm, Xn, trajectories, isCovMat, opts)
             D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts);
         end        
       
-        function K = sexpScaleKernel(obj, D, hyper)
-            sigmaf = exp(hyper(1,1));
-            sigmal = exp(hyper(1,2));
-            
-            K = sigmaf.^2 .* exp(-0.5 .* (D./sigmal).^2);
+        function [K,norml] = sexpScaleKernel(obj, D, hyper)
+            if nargout == 1
+                sigmaf = exp(hyper(1,1));
+                sigmal = exp(hyper(1,2));
+                
+                K = sigmaf.^2 .* exp(-0.5 .* (D./sigmal).^2);
+            else
+                K = [];
+                norml = max(max(D)) / sqrt(2*obj.maxExp);
+                norml = max(norml,1);
+            end
         end
         
-        function K = matern52ScaleKernel(obj, D, hyper)
-            sigmaf = exp(hyper(1,1));
-            sigmal = exp(hyper(1,2));
-            
-            K1 = sqrt(5) .* D ./ sigmal;
-            K2 = 5 .* D .^ 2 / (3.*sigmal^2);
-            K3 = -sqrt(5) .* D ./ sigmal;
-            K = sigmaf .^ 2 .* (1 + K1 + K2) .* exp(K3);
+        function [K,norml] = matern52ScaleKernel(obj, D, hyper)
+            if nargout == 1
+                sigmaf = exp(hyper(1,1));
+                sigmal = exp(hyper(1,2));
+
+                K1 = sqrt(5) .* D ./ sigmal;
+                K2 = 5 .* D .^ 2 / (3.*sigmal^2);
+                K3 = -sqrt(5) .* D ./ sigmal;
+                K = sigmaf .^ 2 .* (1 + K1 + K2) .* exp(K3);
+            else
+                K = [];                
+                norml = sqrt(5) * max(max(D)) / obj.maxExp;
+                norml = max(norml,1);
+            end
         end
         
-        function K = trajectoryScaleKernel(obj, D, hyper)
-            sigmaf = exp(hyper(1,1));
-            sigmal = exp(hyper(1,2));
-            
-            K = sigmaf .* exp (-D .*sigmal);
+        function [K,norml] = trajectoryScaleKernel(obj, D, hyper)
+            if nargout == 1
+                sigmaf = exp(hyper(1,1));
+                sigmal = exp(hyper(1,2));
+
+                K = sigmaf .* exp (-D ./sigmal);
+            else
+                K = [];                
+                norml = max(max(D)) / obj.maxExp;
+                norml = max(norml,1);
+            end
         end
         
         function [vals, traj] = eval(obj, samples)
-            vals = zeros(size(samples,1),1);
-            traj = cell(size(samples,1),1);
-            for i=1:size(samples,1)
-                [vals(i,1), traj{i,1}] = objectiveFcn(samples(i,:), obj.opts);
+            if isequal(obj.opts.platform, 'matlab')
+                vals = zeros(size(samples,1),1);
+                traj = cell(size(samples,1),1);
+                for i=1:size(samples,1)
+                    for j=1:obj.opts.trajectoriesPerSample
+                        [vals(i,j), traj{i,j}] = objectiveFcn(samples(i,:), obj.opts);
+                    end
+                end
+            elseif isequal(obj.opts.platform, 'pygym')
+                %TODO
             end
         end
     end

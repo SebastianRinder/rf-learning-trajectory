@@ -1,19 +1,24 @@
-function [opts] = environmentSettings(env, visualize)
+function [opts] = environmentSettings(env, platform, visualize)
+    %
     if isequal(env, 'cartPole')
         opts.dim = 4;
-        opts.errorVariance = 1e-4;
-        opts.actionList = [];	%continuous action selection
-        opts.bounds.position = [-5, 5];
-        opts.bounds.angle = [-90 * pi / 180, 90 * pi / 180];
-        opts.bounds.rewardPosition = [-1, 1];
-        opts.bounds.rewardAngle = [-12 * pi / 180, 12 * pi / 180];
-        opts.state0 = zeros(1,5); %position, velocity, acceleration, angle, angularVelocity
         opts.timeSteps = 1000;
-    
         opts.actionSelectionFcn = @actionSelectionCartPole;
-        opts.simFcn = @simCartPole;
-        opts.rewardFcn = @rewardCartPole;
-        opts.visFcn = @visCartPole;
+        
+        if isequal(platform, 'pygym')
+            opts.actionList = [0, 1];
+        else
+            opts.actionList = [];	%continuous action selection
+            opts.bounds.position = [-5, 5];
+            opts.bounds.angle = [-90 * pi / 180, 90 * pi / 180];
+            opts.bounds.rewardPosition = [-1, 1];
+            opts.bounds.rewardAngle = [-12 * pi / 180, 12 * pi / 180];
+            opts.state0 = zeros(1,5); %position, velocity, acceleration, angle, angularVelocity            
+            
+            opts.simFcn = @simCartPole;
+            opts.rewardFcn = @rewardCartPole;
+            opts.visFcn = @visCartPole;
+        end
     elseif isequal(env, 'mountainCar')
         opts.dim = 9*2;
         opts.actionList = [-1,1];   %apply acceleration to the rear or forward
@@ -40,6 +45,8 @@ function [opts] = environmentSettings(env, visualize)
         opts.simFcn = @simAcroBot;
         opts.rewardFcn = @rewardAcroBot;
         opts.visFcn = @visAcroBot;        
+    elseif isequal(env, 'randGauss')
+        
     else
         error(['no environment for ', env]);
     end

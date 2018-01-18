@@ -1,5 +1,3 @@
-%% author: Sebastian Rinder
-
 function val = thompsonSample(X, knownX, knownY, trajectories, func)
     persistent sampleX;
     persistent sampleY;
