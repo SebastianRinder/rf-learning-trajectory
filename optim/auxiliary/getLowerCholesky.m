@@ -21,5 +21,6 @@ function [L, alpha] = getLowerCholesky(K, knownY, calcHyper, noiseVariance)
 
     if nargout > 1 && ~isempty(L)
         alpha = L'\(L \ knownY);        %Rasmussen, Williams 2005
+        alpha(isnan(alpha)) = 0;
     end
 end

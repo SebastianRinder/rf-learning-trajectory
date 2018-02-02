@@ -25,7 +25,7 @@ classdef DensityWeightedBO_core_trajectory
                 std_yl = std(yl);
 %                 std_yl = 1;
                 y = (yl - yCentering) / std_yl;
-                
+                y(isnan(y)) = 0;
 
                 % use CMA-ES to maximize exp(thompson) * density acquisition
                 newSamples = zeros(lambda, length(dist.mu));
@@ -39,20 +39,27 @@ classdef DensityWeightedBO_core_trajectory
                 end
                 hyperTrace = [hyperTrace; func.opts.hyper];
                 
+                acq = 1;
                 
                 for k = 1:lambda
-%                     newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSamplingFmin(x, y, trajectories, dist, beta, func);
                     if k > 1
                         D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
                     end
                     [L, alpha] = getLowerCholesky(D, y, false, func.opts.noiseVariance);
-                    bestY = max(y);
-                    newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxExpectedImprovement(x, trajectories, L, alpha, dist, beta, func, bestY);
                     
-%                     newVals(k) = func.eval(newSamples(k, :));
+                    if acq == 1
+                        newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSampling(x, trajectories, L, alpha, dist, beta, func);
+                    elseif acq == 2
+                        %newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSamplingFmin(x, y, trajectories, dist, beta, func);
+                    elseif acq == 3
+                        bestY = max(y);
+                        newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxExpectedImprovement(x, trajectories, L, alpha, dist, beta, func, bestY);
+                    end
+                    
                     [newVals(k), newTrajectories(k,1)] = func.eval(newSamples(k, :));
                     x = [x; (newSamples(k, :) - dist.mu) * cholPrec];
                     y = [y; (newVals(k) - yCentering) / std_yl];
+                    y(isnan(y)) = 0;
                     trajectories = [trajectories; newTrajectories(k,1)];
                 end
             end
@@ -80,19 +87,24 @@ classdef DensityWeightedBO_core_trajectory
             newSample = localMinSearch(negTSFcn, dist, beta);            
         end
         
-        function newSample = maxThompsonSampling(x,y, trajectories, L, alpha, dist, beta, opts)
-            evalSamples = dist.getSamples(800);
-            if (beta < 0)  % if beta < 0: disgard samples too far away from mean 
-                probaThresh = -beta;
-                mahDistMu = pdist2(evalSamples, dist.mu, 'mahalanobis', dist.getCov) .^ 2;
-                cutOffDist = chi2inv(probaThresh, length(dist.mu));
-                evalSamples = evalSamples(mahDistMu < cutOffDist, :);
-                [meanVec, ~, covarianceMat] = gaussianProcess(evalSamples, x, y, trajectories, L, alpha, opts);
-                cholCov = getLowerCholesky(covarianceMat, y, false);
-                vals = meanVec + cholCov * randn(size(evalSamples,1), 1);
-            end
+        function newSample = maxThompsonSampling(x, trajectories, L, alpha, dist, beta, func)
+            evalSamples = dist.getSamples(300);
+            
+            probaThresh = -beta;
+            mahDistMu = pdist2(evalSamples, dist.mu, 'mahalanobis', dist.getCov) .^ 2;
+            cutOffDist = chi2inv(probaThresh, length(dist.mu));
+            evalSamples = evalSamples(mahDistMu < cutOffDist, :);
+            [meanVec, ~, covarianceMat] = gaussianProcess(evalSamples, x, trajectories, L, alpha, func);
+            cholCov = getLowerCholesky(covarianceMat, [], false, func.opts.noiseVariance);
+            vals = meanVec + cholCov * randn(size(evalSamples,1), 1);
+
             [~, argmax] = max(vals);
             newSample = evalSamples(argmax, :);
+            if func.opts.acquisitionPlot
+                selectFigure('Thompson Sample values (sorted)');
+                plot(sort(vals));
+                pause(0.1);
+            end
         end
     end
 end

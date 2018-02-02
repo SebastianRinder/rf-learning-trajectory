@@ -7,67 +7,35 @@ function D = trajectoryDistance(Xm, Xn, trajectories, isThompsonsSample, opts)
     if m == n && all(all(Xm == Xn)) %symmetric = true
         if ~isThompsonsSample
             for i = 1:m
-                for j = i:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = monteCarloEst(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
-                    end
+                for j = i+1:n
+                    D(i,j) = monteCarloEst(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
                 end
             end
         else
             states = [];
             for i = 1:size(trajectories,1) %only 1 sample per trajectory
-                states = [states; trajectories{i,1}.state]; %------------select randperm -> break > 500
+                states = [states; trajectories{i,1}.state];
             end
             if size(states,1) > 500
                 states = states(randsample(size(states,1),500),:);
             end
             for i = 1:m
-                for j = i:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
-                    end
+                for j = i+1:n
+                    D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
                 end
             end
         end
         D = D + D';
-        
-    else
-        
-        if ~isThompsonsSample
-            for i = 1:m
-                for j = 1:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
-                    end
-                end
+
+    else        
+        for i = 1:m
+            for j = 1:n
+                D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
             end
-        else
-            
-            states = [];
-            for i = 1:size(trajectories,1) %only 1 sample per trajectory
-                states = [states; trajectories{i,1}.state]; %------------select randperm -> break > 500
-            end
-            if size(states,1) > 500
-                states = states(randsample(size(states,1),500),:);
-            end
-            for i = 1:m
-                for j = 1:n
-                    if all(Xm(i,:) == Xn(j,:))
-                        D(i,j) = 0;
-                    else
-                        D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
-                    end
-                end
-            end
-            
         end
     end
+    
+    D(D<0) = 0;
 end
 
 function D = importanceSampling(xNew, knownTrajectory, opts)
@@ -76,9 +44,9 @@ function D = importanceSampling(xNew, knownTrajectory, opts)
     for k = 1:size(knownTrajectory, 2)
         traj = knownTrajectory{1,k};
 
-        [~,probNew] = opts.actionSelectionFcn(xNew, traj.state, traj.action, opts);
+        [~,probNew] = opts.actionSelectionFcn(xNew, traj.state, traj.action, opts.actionMisc);
         
-        if isequal(opts.environment, 'cartPole')
+        if isequal(opts.actionSpace, 'continuous')
             probDiff = sum(probNew - traj.prob);
             Dtemp1 = exp(probDiff);
             Dtemp2 = probDiff;
@@ -101,8 +69,8 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
     for k = 1:size(traji, 2)
         traj = traji{1,k};
 
-        [~,probj] = opts.actionSelectionFcn(xj, traj.state, traj.action, opts);
-        if isequal(opts.environment, 'cartPole')
+        [~,probj] = opts.actionSelectionFcn(xj, traj.state, traj.action, opts.actionMisc);
+        if isequal(opts.actionSpace, 'continuous')
             D1 = D1 + sum(traj.prob - probj) ./ length(traj.state);
         else
             D1 = D1 + sum(log(traj.prob ./ probj)) ./ length(traj.state);
@@ -113,8 +81,8 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
     for k = 1:size(trajj, 2)
         traj = trajj{1,k};
         
-        [~,probi] = opts.actionSelectionFcn(xi, traj.state, traj.action, opts);
-        if isequal(opts.environment, 'cartPole')
+        [~,probi] = opts.actionSelectionFcn(xi, traj.state, traj.action, opts.actionMisc);
+        if isequal(opts.actionSpace, 'continuous')
             D2 = D2 + sum(traj.prob - probi) ./ length(traj.state);
         else
             D2 = D2 + sum(log(traj.prob ./ probi)) ./ length(traj.state);
@@ -125,8 +93,16 @@ function D = monteCarloEst(xi, xj, traji, trajj, opts)
 end
 
 function D = closedForm(xi, xj, states, opts)
-    [~,~,mu1] = opts.actionSelectionFcn(xi, states, [], opts);
-    [~,~,mu2] = opts.actionSelectionFcn(xj, states, [], opts);
-    muDiff = mu1 - mu2;
-    D = (muDiff' * muDiff) ./ size(states,1);
+    if isequal(opts.actionSpace, 'continuous')
+        [~,~,mu1] = opts.actionSelectionFcn(xi, states, [], opts.actionMisc);
+        [~,~,mu2] = opts.actionSelectionFcn(xj, states, [], opts.actionMisc);
+        muDiff = mu1 - mu2;
+        D = (muDiff' * muDiff) ./ opts.timeSteps; %size(states,1);
+    else
+        [~,~,prob1] = opts.actionSelectionFcn(xi, states, [], opts.actionMisc);
+        [~,~,prob2] = opts.actionSelectionFcn(xj, states, [], opts.actionMisc);
+        probDiff = sum(abs(prob1 - prob2),2);
+%         D = sum(probDiff) ./ opts.timeSteps;
+        D = mean(probDiff);
+    end
 end

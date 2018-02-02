@@ -76,8 +76,10 @@ classdef DensityWeightedBO_trajectory
                 storedVals = [storedVals; newVals];
                 storedTrajectories = [storedTrajectories; newtrajectory];
                 
-                fprintf('%g%%: ', round(iter .* 100 ./ nbIter));
-                fprintf(['rewards ' ,num2str(newVals'), ', ']);
+                if fun.opts.verbose == 1
+                    fprintf('%g%%: ', round(iter .* 100 ./ nbIter));
+                    fprintf(['rewards ' ,num2str(newVals'), ', ']);
+                end
                                 
                 % delete old samples
                 if(iter > maxIterReuse)
@@ -174,7 +176,7 @@ classdef DensityWeightedBO_trajectory
                 % solve the optim problem
                 desiredEntrop = currentDistrib.getEntropy - entropyReduc;
                 [etaStar, betaStar] = static_optimization_algs.More.optimizeDual(currentDistrib, quadModel, epsiKL, desiredEntrop);
-                [currentDistrib, ~, kl] = static_optimization_algs.More.updatePolicy(currentDistrib, quadModel, [etaStar, betaStar], 1);
+                [currentDistrib, ~, kl] = static_optimization_algs.More.updatePolicy(currentDistrib, quadModel, [etaStar, betaStar], verbose);
                 kls(iter) = kl;
             end
             if(~isempty(videoFile))

@@ -29,3 +29,8 @@ end
 l3 = shadedErrorBar(-9:200,mean(Y3,2),std(Y3,0,2),'lineprops','-r','transparent',1);
 
 legend([l3.mainLine l2.mainLine l1.mainLine],'trajectory kernel','matern 5/2 kernel','squared exponential kernel');
+
+xlabel('bayesian optimization iteration step')
+ylabel('cumulative reward')
+
+figuresize(13,10,'cm')

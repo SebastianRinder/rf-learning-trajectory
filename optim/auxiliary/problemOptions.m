@@ -7,10 +7,11 @@ classdef problemOptions < handle
     end
     
     methods
-        function obj = problemOptions(kernelName, platform, environment)    
+        function obj = problemOptions(kernelName, platform, environment, optimizerType)    
             obj.maxExp = 100;
             obj.opts = environmentSettings(environment, platform, 'none');
             obj.opts.platform = platform;
+            obj.opts.env = environment;
             
             if strcmp(kernelName, 'sexp')
                 obj.opts.distanceMat = @obj.euclideanDistance;
@@ -19,7 +20,11 @@ classdef problemOptions < handle
                 obj.opts.distanceMat = @obj.euclideanDistance;
                 obj.opts.scaleKernel = @obj.matern52ScaleKernel;
             elseif strcmp(kernelName, 'trajectory')
-                obj.opts.distanceMat = @obj.trajectoryDistance;
+                if strcmp(optimizerType, 'global')
+                    obj.opts.distanceMat = @obj.trajectoryDistance;
+                else
+                    obj.opts.distanceMat = @obj.trajectoryDistanceLocal;
+                end
                 obj.opts.scaleKernel = @obj.trajectoryScaleKernel;
             else
                 error(['no covariance function for ', kernelName]);
@@ -32,6 +37,10 @@ classdef problemOptions < handle
         
         function D = trajectoryDistance(obj, Xm, Xn, trajectories, isCovMat, opts)
             D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts);
+        end      
+        
+        function D = trajectoryDistanceLocal(obj, Xm, Xn, trajectories, isCovMat, opts)
+            D = trajectoryDistanceLocal(Xm, Xn, trajectories, isCovMat, opts);
         end        
       
         function [K,norml] = sexpScaleKernel(obj, D, hyper)
@@ -86,7 +95,28 @@ classdef problemOptions < handle
                     end
                 end
             elseif isequal(obj.opts.platform, 'pygym')
-                %TODO
+                timesteps = uint16(obj.opts.timeSteps);
+                actionlist = uint8(obj.opts.actionList);
+                
+                for i=1:size(samples,1)
+                    if strcmp(obj.opts.env, 'cartPole')
+                        ret = py.gymCartPole.evaluate(samples(i,:),timesteps,actionlist);
+                    elseif strcmp(obj.opts.env, 'mountainCar')
+                        ret = py.gymMountainCar.evaluate(samples(i,:),timesteps,actionlist);
+                    elseif strcmp(obj.opts.env, 'acroBot')
+                        ret = py.gymAcroBot.evaluate(samples(i,:),timesteps,actionlist);
+                    elseif strcmp(obj.opts.env, 'mountainCarContinuous')
+                        ret = py.gymMountainCarContinuous.evaluate(samples(i,:),timesteps,obj.opts.errordeviation);
+                    end
+                    
+                    states = double(py.array.array('d',py.numpy.nditer(ret{1,1})));
+                    trajectory.state = reshape(states, obj.opts.stateDim,[])';
+                    trajectory.action = double(py.array.array('d',py.numpy.nditer(ret{1,2})))';
+                    trajectory.prob = double(py.array.array('d',py.numpy.nditer(ret{1,3})))';
+                    trajectory.cumReward = double(py.array.array('d',py.numpy.nditer(ret{1,4})))';
+                    traj{i,1} = trajectory;
+                    vals(i,1) = trajectory.cumReward(end,1);
+                end                
             end
         end
     end

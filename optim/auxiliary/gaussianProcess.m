@@ -1,5 +1,5 @@
-function [meanVec, covarianceVec, covarianceMat] = gaussianProcess(testX, knownX, trajectories, L, alpha, isThompsonsSample, func)
-    Ds = func.opts.distanceMat(testX, knownX, trajectories, isThompsonsSample, func.opts)';
+function [meanVec, covarianceVec, covarianceMat] = gaussianProcess(testX, knownX, trajectories, L, alpha, func)
+    Ds = func.opts.distanceMat(testX, knownX, trajectories, false, func.opts)';
     Ks = func.opts.scaleKernel(Ds, func.opts.hyper);
     
     meanVec = Ks' * alpha; %Rasmussen, Williams 2005
@@ -11,8 +11,9 @@ function [meanVec, covarianceVec, covarianceMat] = gaussianProcess(testX, knownX
 
     elseif nargout == 3
         covarianceVec = [];        
-        Dss = func.opts.distanceMat(testX, testX, trajectories, isThompsonsSample, opts)';
-        Kss = func.opts.scaleKernel(Dss, func.opts.hyper);
+        Dss = func.opts.distanceMat(testX, testX, trajectories, true, func.opts)';
+%         Kss = func.opts.scaleKernel(Dss, func.opts.hyper);
+        Kss = func.opts.scaleKernel(Dss, [0 0]);
         v = L \ Ks;
         covarianceMat = Kss - (v'*v); %Rasmussen, Williams 2005
         

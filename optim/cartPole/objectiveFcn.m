@@ -1,24 +1,27 @@
 function [finalReward, trajectory] = objectiveFcn(policy, opts)
-    trajectory.state = zeros(opts.timeSteps,size(opts.state0,2));
-    trajectory.action = zeros(opts.timeSteps,1);
-    trajectory.prob = zeros(opts.timeSteps,1);
-    trajectory.cumReward = zeros(opts.timeSteps,1);
+    
     
     cumReward = 0;    
     %probFac = 1;
-    if isequal(opts.environment, 'cartPole')
-        opts.state0 = rand(1,5) * 0.1 - 0.05;
+%     if strcmp(opts.platform, 'matlab') && strcmp(opts.environment, 'cartPole')
+        opts.state0 = rand(1,4) * 0.1 - 0.05;
+%         opts.state0 = rand(1,5) * 0.1 - 0.05;
 %         angle = randn * 0.01;
 %         s = sign(angle);
 %         if s == 0, s = 1; end
 %         opts.state0(4) = max(abs(angle),0.01) * s; %at least ~0.6 degree deviation from vertical
         
         %probFac = 1/sqrt(1e-4.*2.*pi);
-    end
+%     end
     state = opts.state0;    
+
+    trajectory.state = zeros(opts.timeSteps,size(opts.state0,2));
+    trajectory.action = zeros(opts.timeSteps,1);
+    trajectory.prob = zeros(opts.timeSteps,1);
+    trajectory.cumReward = zeros(opts.timeSteps,1);
     
     for i=1:opts.timeSteps
-        [action, optProb] = opts.actionSelectionFcn(policy, state, [], opts);
+        [action, optProb] = opts.actionSelectionFcn(policy, state, [], opts.actionMisc);
         nextState = opts.simFcn(state, action, opts.bounds);        
         [reward, finished] = opts.rewardFcn(nextState, opts.bounds, i==opts.timeSteps);
 

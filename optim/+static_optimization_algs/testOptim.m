@@ -9,26 +9,7 @@
 % end
 %%%
 
-function ret = testOptim()
-    loop = true;
-    while loop
-        try
-            ret = licenceLoopTestOptim();
-            loop = false;
-        catch me
-            if ~strcmp(me.identifier,'parallel:cluster:LicenseUnavailable')
-                hrs = datestr(now,'_dd-mm-yyyy_HH-MM');
-                save(['results/error',hrs,'.mat'],'me');
-                disp(getReport(me))
-                loop = false;
-            else
-                pause(30);
-            end
-        end
-    end
-end
-
-function ret = licenceLoopTestOptim()
+function testOptim()
 
 % close all;
 % clear variables;
@@ -36,10 +17,10 @@ function ret = licenceLoopTestOptim()
 % set(0, 'DefaultFigureVisible', 'off')
 
 %% seed control
-rng('default');
-rng('shuffle');
-seed = rng;
-seed = seed.State(1)
+% rng('default');
+% rng('shuffle');
+% seed = rng;
+% seed = seed.State(1)
 % seed = 534948956
 % seed = 59823194
 % seed = 3268008736;
@@ -50,7 +31,7 @@ seed = seed.State(1)
 %seed = 3916729757
 %seed = 1563644028 %bad m-projection
 %seed = 3088878663 %very good m-projection (nbGauss = 50)
-rng(seed);
+% rng(seed);
 rootPlot = '+static_optimization_algs/plots/';
 if(~exist(rootPlot,'dir'))
     mkdir(rootPlot);
@@ -69,7 +50,7 @@ end
 % hnd = figure(1);
 % func.plot();
 
-funSignature = 'CartpoleTrajLocal';
+% funSignature = 'testOptim';
 % fname = [rootPlot 'objective_' funSignature];
 % hgexport(hnd, [fname '.eps']); %this works better than saveas and print
 
@@ -124,9 +105,9 @@ optimizerInput.initVar = 1;
 optimizerInput.minEpsiKL = .01;
 optimizerInput.epsiKL = .05;
 optimizerInput.entropyReduction = .05;
-optimizerInput.nbSamplesPerIter = 3;
+optimizerInput.nbSamplesPerIter = 4;
 optimizerInput.nbInitSamples = 5;
-optimizerInput.nbIter = 80;
+optimizerInput.nbIter = 100;
 optimizerInput.maxEvals = 500; %cmaes wrapper only depends on this.
 %optimizerInput.maxIterReuse = optimizerInput.nbIter;
 optimizerInput.maxIterReuse = 30;
@@ -168,8 +149,8 @@ optimizerInput.yCenteringType = 'mean'; %thompson sampling
 
 optimizerInput.videoFile = [];
 
-seed = rng;
-seedStartOpt = seed.State(2)
+% seed = rng;
+% seedStartOpt = seed.State(2)
 
 % for k = 1:length(optimizers)
 %     rng(seedStartOpt);
@@ -182,74 +163,172 @@ seedStartOpt = seed.State(2)
 %     toc
 % end
 
-isCluster = 1; %0 if debugging
+% optimizerType = 'local';
+optimizerType = 'global';
+
+trials = 5;
+cores = 4;
+useParallel = 0;
 kernel = {'sexp','matern52','trajectory'};
 
-%platform = 'pygym';
+verbose = 0;
+
+% platform = 'pygym';
 platform = 'matlab';
 
+% env = 'mountainCarContinuous';
+% env = 'acroBot';
+% env = 'mountainCar';
 env = 'cartPole';
+% env = 'bipedalWalker';
 
+addpath('pygym');
 addpath('auxiliary');
 addpath('cartPole');
  
-for kernelIdx = 1:3
-    func = problemOptions(kernel{kernelIdx},platform,env);
+hrs = datestr(now,'dd-mm-yyyy_HH-MM');
+dirStr = sprintf('results/%s_%s_%s_%s', optimizerType, env, platform, hrs);
+
+%for ed = 10.^[0:-1:-5]
+
+for kernelIdx = 1:2
+    seedInit = setRandom();
+    func = problemOptions(kernel{kernelIdx},platform,env, optimizerType);
     optimizerInput.fun = func;
     mu = zeros(1,func.opts.dim);
     covC = eye(func.opts.dim) * optimizerInput.initVar;
     optimizerInput.initDistrib = static_optimization_algs.Normal(mu, covC);
     
+    func.opts.verbose = verbose;
+    
+    func.opts.optimizerType = optimizerType;
+    func.opts.cores = cores;
     func.opts.trajectoriesPerSample = 1;
     func.opts.hyperOptimize = 0;
     func.opts.hyperPlot = 0;
-    func.opts.acquisitionPlot = 1;
+    func.opts.acquisitionPlot = 0;
     func.opts.useGADSToolbox = 0;
     func.opts.noiseVariance = 1e-6;
+    
+    % continuous action
+    func.opts.actionMisc = 0.1; %1
+    
+    % global opt
+    func.opts.ub = 1.*ones(1,func.opts.dim);
+    func.opts.lb = -1.*func.opts.ub;
+    func.opts.bayOptSteps = 200;
+    func.opts.initialSamplesCount = 10;
+    func.opts.useMaxMean = 0;
+        
 
-    ub = 1.*ones(1,func.opts.dim);
-    lb = -1.*ub;
+%     ub = 1.*ones(1,func.opts.dim);
+%     lb = -1.*ub;
+% 
+%     samplesCount = 10;
+% 
+%     bsf = 0;
+%     for i = 1:samplesCount
+%         X = randBound(lb, ub, samplesCount);
+%         if minDist(X,lb,ub) > bsf
+%             bsf = minDist(X,lb,ub);
+%             samples = X;
+%         end
+%     end
+% 
+%     for i=1:samplesCount
+%         for j = 1:func.opts.trajectoriesPerSample
+%             [~, trajectories(i,j)] = func.eval(samples(i,:));
+%         end
+%     end
+%     
+%     D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
+%     D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
+%     randSamples = randBound(lb,ub,300);
+%     D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
+%     ttt = [max(D1(:)), max(D2(:)),max(D3(:))];
+% 
+%     histogram(D1);
+%     figure;
+%     histogram(D2);
+%     figure;
+%     histogram(D3);
+    
+%     D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
+%     [~,sigmal1] = func.opts.scaleKernel(D1,[]);
+%     D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
+%     [~,sigmal2] = func.opts.scaleKernel(D2,[]);
+%     randSamples = randBound(lb,ub,300);
+%     D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
+%     [~,sigmal3] = func.opts.scaleKernel(D3,[]);
+%     func.opts.hyper = [0,log(mean([sigmal1,sigmal2]))];
+%     ttt = [ttt; ed, sigmal1, sigmal2, sigmal3];
 
-    samplesCount = 10;
-
-    bsf = 0;
-    for i = 1:samplesCount
-        X = randBound(lb, ub, samplesCount);
-        if minDist(X,lb,ub) > bsf
-            bsf = minDist(X,lb,ub);
-            samples = X;
+    func.opts.hyper = [0, 0];
+    
+    trial = 1;
+    while trial <= trials
+        func.opts.useParallel = useParallel;
+        if useParallel
+            try 
+                if ~exist('pp','var')
+                    pp = parpool(func.opts.cores);
+                end
+            catch me
+                if strcmp(me.identifier,'parallel:cluster:LicenseUnavailable')
+                    func.opts.useParallel = 0;
+                else
+                    hrs = datestr(now,'_dd-mm-yyyy_HH-MM');
+                    save(['results/error',hrs,'.mat'],'me');
+                    disp(getReport(me));
+                    exit;
+                end
+            end
         end
-    end
-
-    for i=1:samplesCount
-        for j = 1:func.opts.trajectoriesPerSample
-            [~, trajectories(i,j)] = func.eval(samples(i,:));
+        
+        if func.opts.useParallel
+            parfor t = trial:trials
+                optiHelp(func,optimizerInput,t,seedInit,dirStr,kernel{kernelIdx});
+            end
+            trial = trials + 1;
+        else
+            optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernel{kernelIdx});
+            trial = trial + 1;
         end
-    end
-
-    D = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
-    [~,sigmal] = func.opts.scaleKernel(D,[]);
-    func.opts.hyper = [0,log(sigmal)];
-
-    if isCluster
-        trials = 32;
-        delete(gcp('nocreate')); %shut down previously created parpool
-        parpool(trials);
-        parfor trial=1:trials
-            ret{trial,1}.knownY = optimizers{1}.optimizeStruct(optimizerInput, func);
-        end
-        delete(gcp('nocreate'));
-    else
-        trials = 1;
-        for trial=1:trials
-            ret{trial,1}.knownY = optimizers{1}.optimizeStruct(optimizerInput, func);
-        end
-    end
-    hrs = datestr(now,'dd-mm-yyyy_HH-MM');
-    saveStr = sprintf('results/%s_%s_%s_%s_%0.0e_%s.mat', 'local', env, platform, kernel{kernelIdx}, func.opts.noiseVariance, hrs);
-    save(saveStr,'ret');
+    end  
+   
+%     hrs = datestr(now,'dd-mm-yyyy_HH-MM');
+%     saveStr = sprintf('results/%s_%s_%s_%s_%0.0e_%s.mat', 'local_thompson_full_300', env, platform, kernel{kernelIdx}, func.opts.noiseVariance, hrs);
+%     save(saveStr,'ret');
 end
 
+end
+
+function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
+    ret = [];
+    seedStartOpt = setRandom();
+    tic;
+    if strcmp(func.opts.optimizerType, 'local')
+        ret.knownY = static_optimization_algs.DensityWeightedBO_trajectory(optimizerInput, func);
+    else
+        ret.knownY = static_optimization_algs.globalBO.optimze(func, trial);
+    end
+    ret.timeTakenSeconds = toc;
+    ret.hyper = func.opts.hyper;
+    ret.noiseVariance = func.opts.noiseVariance;
+    ret.seedStartOpt = seedStartOpt;
+    ret.seedInit = seedInit;
+    if ~exist(dirStr,'dir')
+        mkdir(dirStr);
+    end
+    saveStr = sprintf('%s/%s_%02d.mat', dirStr, kernelStr, trial);
+    save(saveStr,'ret');
+    disp(trial);
+end
+
+function seedStartOpt = setRandom()
+    seed = rng('shuffle');
+    seedStartOpt = seed.State(2);
+    rng(seedStartOpt);
 end
 
 %% performance plotting
