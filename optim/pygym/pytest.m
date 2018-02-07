@@ -1,29 +1,29 @@
 clear classes;
 P = py.sys.path;
-if count(P,'/home/yx58adif/openaigym') == 0
-    insert(P,int32(0),'/home/yx58adif/openaigym');
-end
-if count(P,'/home/yx58adif/openaigym/gym') == 0
-    insert(P,int32(0),'/home/yx58adif/openaigym/gym');
-end
-if count(P,'/home/yx58adif/imageio') == 0
-    insert(P,int32(0),'/home/yx58adif/imageio');
-end
-if count(P,'/home/yx58adif/mujoco-py') == 0
-    insert(P,int32(0),'/home/yx58adif/mujoco-py');
-end
-if count(P,'/home/yx58adif/Box2D-kengz-2.3.3') == 0
-    insert(P,int32(0),'/home/yx58adif/Box2D-kengz-2.3.3');
-end
-if count(P,'/home/yx58adif/pyglet') == 0
-    insert(P,int32(0),'/home/yx58adif/pyglet');
-end
-if count(P,'/home/yx58adif/six') == 0
-    insert(P,int32(0),'/home/yx58adif/six');
-end
-if count(P,'/home/yx58adif/numpy') == 0
-    insert(P,int32(0),'/home/yx58adif/numpy');
-end
+% if count(P,'/home/yx58adif/openaigym') == 0
+%     insert(P,int32(0),'/home/yx58adif/openaigym');
+% end
+% if count(P,'/home/yx58adif/openaigym/gym') == 0
+%     insert(P,int32(0),'/home/yx58adif/openaigym/gym');
+% end
+% if count(P,'/home/yx58adif/imageio') == 0
+%     insert(P,int32(0),'/home/yx58adif/imageio');
+% end
+% if count(P,'/home/yx58adif/mujoco-py') == 0
+%     insert(P,int32(0),'/home/yx58adif/mujoco-py');
+% end
+% if count(P,'/home/yx58adif/Box2D-kengz-2.3.3') == 0
+%     insert(P,int32(0),'/home/yx58adif/Box2D-kengz-2.3.3');
+% end
+% if count(P,'/home/yx58adif/pyglet') == 0
+%     insert(P,int32(0),'/home/yx58adif/pyglet');
+% end
+% if count(P,'/home/yx58adif/six') == 0
+%     insert(P,int32(0),'/home/yx58adif/six');
+% end
+% if count(P,'/home/yx58adif/numpy') == 0
+%     insert(P,int32(0),'/home/yx58adif/numpy');
+% end
 
 
 

@@ -1,31 +1,33 @@
-function D = trajectoryDistance(Xm, Xn, trajectories, kernelType, opts)
+function D = trajectoryDistance(Xm, Xn, trajectories, isThompsonsSample, opts)
     m = size(Xm,1);
     n = size(Xn,1);
     
     D = zeros(m,n);    
     
-    if strcmp(kernelType, 'kk') %known, known trajectory
-        for i = 1:m
-            for j = i+1:n
-                D(i,j) = monteCarloEst(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
+    if m == n && all(all(Xm == Xn)) %symmetric = true
+        if ~isThompsonsSample
+            for i = 1:m
+                for j = i+1:n
+                    D(i,j) = monteCarloEst(Xm(i,:), Xn(j,:), trajectories(i,:), trajectories(j,:), opts);
+                end
+            end
+        else
+            states = [];
+            for i = 1:size(trajectories,1) %only 1 sample per trajectory
+                states = [states; trajectories{i,1}.state];
+            end
+            if size(states,1) > 500
+                states = states(randsample(size(states,1),500),:);
+            end
+            for i = 1:m
+                for j = i+1:n
+                    D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
+                end
             end
         end
         D = D + D';
-    elseif strcmp(kernelType, 'uu') %unknown, unknown trajectory
-        states = [];
-        for i = 1:size(trajectories,1) %only 1 sample per trajectory
-            states = [states; trajectories{i,1}.state];
-        end
-        if size(states,1) > 500
-            states = states(randsample(size(states,1),500),:);
-        end
-        for i = 1:m
-            for j = i+1:n
-                D(i,j) = closedForm(Xm(i,:), Xn(j,:), states, opts);
-            end
-        end
-        D = D + D';
-    elseif strcmp(kernelType, 'uk') %unknown, known trajectory
+
+    else        
         for i = 1:m
             for j = 1:n
                 D(i,j) = importanceSampling(Xm(i,:), trajectories(j,:), opts);
@@ -33,7 +35,6 @@ function D = trajectoryDistance(Xm, Xn, trajectories, kernelType, opts)
         end
     end
     
-    D(isnan(D)) = 0;
     D(D<0) = 0;
 end
 
@@ -103,9 +104,5 @@ function D = closedForm(xi, xj, states, opts)
         Dtemp = log(prob1./prob2);
         D = sum(prob1.* Dtemp) + sum(-prob2.* Dtemp);
         D = D ./ size(states,1);
-%         [~,~,prob1] = opts.actionSelectionFcn(xi, states, [], opts.actionMisc);
-%         [~,~,prob2] = opts.actionSelectionFcn(xj, states, [], opts.actionMisc);
-%         probDiff = sum(abs(prob1 - prob2),2);
-%         D = mean(probDiff);
     end
 end

@@ -1,3 +1,6 @@
+%1. install anaconda
+% path in bash
+% python version -> Anaconda
 
 %%%% Plot data with varying size according to reward
 % figure
@@ -171,7 +174,7 @@ cores = 4;
 useParallel = 0;
 kernel = {'sexp','matern52','trajectory'};
 
-verbose = 0;
+verbose = 1;
 
 % platform = 'pygym';
 platform = 'matlab';
@@ -180,7 +183,7 @@ platform = 'matlab';
 % env = 'acroBot';
 % env = 'mountainCar';
 env = 'cartPole';
-% env = 'bipedalWalker';
+
 
 addpath('pygym');
 addpath('auxiliary');
@@ -191,8 +194,8 @@ dirStr = sprintf('results/%s_%s_%s_%s', optimizerType, env, platform, hrs);
 
 %for ed = 10.^[0:-1:-5]
 
-for kernelIdx = 1:2
-    seedInit = setRandom();
+for kernelIdx = 3:3
+    seedInit = setRandom(32145);
     func = problemOptions(kernel{kernelIdx},platform,env, optimizerType);
     optimizerInput.fun = func;
     mu = zeros(1,func.opts.dim);
@@ -204,14 +207,10 @@ for kernelIdx = 1:2
     func.opts.optimizerType = optimizerType;
     func.opts.cores = cores;
     func.opts.trajectoriesPerSample = 1;
-    func.opts.hyperOptimize = 0;
-    func.opts.hyperPlot = 0;
+    func.opts.hyperOptimize = 1;
+    func.opts.hyperPlot = 1;
     func.opts.acquisitionPlot = 0;
-    func.opts.useGADSToolbox = 0;
     func.opts.noiseVariance = 1e-6;
-    
-    % continuous action
-    func.opts.actionMisc = 0.1; %1
     
     % global opt
     func.opts.ub = 1.*ones(1,func.opts.dim);
@@ -219,51 +218,58 @@ for kernelIdx = 1:2
     func.opts.bayOptSteps = 200;
     func.opts.initialSamplesCount = 10;
     func.opts.useMaxMean = 0;
+    func.opts.useGADSToolbox = 1;
         
 
-%     ub = 1.*ones(1,func.opts.dim);
-%     lb = -1.*ub;
-% 
-%     samplesCount = 10;
-% 
-%     bsf = 0;
-%     for i = 1:samplesCount
-%         X = randBound(lb, ub, samplesCount);
-%         if minDist(X,lb,ub) > bsf
-%             bsf = minDist(X,lb,ub);
-%             samples = X;
-%         end
-%     end
-% 
-%     for i=1:samplesCount
-%         for j = 1:func.opts.trajectoriesPerSample
-%             [~, trajectories(i,j)] = func.eval(samples(i,:));
-%         end
-%     end
-%     
-%     D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
-%     D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
-%     randSamples = randBound(lb,ub,300);
-%     D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
-%     ttt = [max(D1(:)), max(D2(:)),max(D3(:))];
-% 
-%     histogram(D1);
-%     figure;
-%     histogram(D2);
-%     figure;
-%     histogram(D3);
-    
-%     D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
-%     [~,sigmal1] = func.opts.scaleKernel(D1,[]);
-%     D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
-%     [~,sigmal2] = func.opts.scaleKernel(D2,[]);
-%     randSamples = randBound(lb,ub,300);
-%     D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
-%     [~,sigmal3] = func.opts.scaleKernel(D3,[]);
-%     func.opts.hyper = [0,log(mean([sigmal1,sigmal2]))];
-%     ttt = [ttt; ed, sigmal1, sigmal2, sigmal3];
+    if kernelIdx == 3 && strcmp(optimizerType,'local')
 
-    func.opts.hyper = [0, 0];
+        ub = 1.*ones(1,func.opts.dim);
+        lb = -1.*ub;
+        samplesCount = 10;
+        bsf = 0;
+        for i = 1:samplesCount
+            X = randBound(lb, ub, samplesCount);
+            if minDist(X,lb,ub) > bsf
+                bsf = minDist(X,lb,ub);
+                samples = X;
+            end
+        end
+        for i=1:samplesCount
+            for j = 1:func.opts.trajectoriesPerSample
+                [~, trajectories(i,j)] = func.eval(samples(i,:));
+            end
+        end
+
+        D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
+        D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
+        randSamples = randBound(lb,ub,316);
+        D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
+    %     ttt = [max(D1(:)), max(D2(:)),max(D3(:))];
+
+        D1(isinf(D1)) = 0;
+%         sigmal = max(D3(:))./mean([max(D1(:)), max(D2(:))]);
+        sigmal = max(D3(:))./mean(max(D1(:)));
+        func.opts.hyper = [0, log(sigmal)];
+%         func.opts.hyper = [0,0];
+
+        figure;
+        subplot(2,3,1);        
+        histogram(D1);
+        subplot(2,3,4);
+        histogram(func.opts.scaleKernel(D1,[0 0]));
+        subplot(2,3,2);
+        histogram(D2);
+        subplot(2,3,5);
+        histogram(func.opts.scaleKernel(D2,[0 0]));
+        subplot(2,3,3);
+        histogram(D3/sigmal);
+        subplot(2,3,6);
+        histogram(func.opts.scaleKernel(D3,func.opts.hyper));
+%         histogram(func.opts.scaleKernel(D3,[0 0]));
+        
+    else
+        func.opts.hyper = [0,0];
+    end
     
     trial = 1;
     while trial <= trials
@@ -305,10 +311,10 @@ end
 
 function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
     ret = [];
-    seedStartOpt = setRandom();
+    seedStartOpt = setRandom(32145);
     tic;
     if strcmp(func.opts.optimizerType, 'local')
-        ret.knownY = static_optimization_algs.DensityWeightedBO_trajectory(optimizerInput, func);
+        ret.knownY = static_optimization_algs.DensityWeightedBO_trajectory.optimizeStruct(optimizerInput, func);
     else
         ret.knownY = static_optimization_algs.globalBO.optimze(func, trial);
     end
@@ -325,9 +331,11 @@ function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
     disp(trial);
 end
 
-function seedStartOpt = setRandom()
-    seed = rng('shuffle');
-    seedStartOpt = seed.State(2);
+function seedStartOpt = setRandom(seedStartOpt)
+    if nargin == 0
+        seed = rng('shuffle');
+        seedStartOpt = seed.State(2);
+    end
     rng(seedStartOpt);
 end
 

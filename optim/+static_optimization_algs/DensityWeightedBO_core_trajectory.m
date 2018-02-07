@@ -22,10 +22,10 @@ classdef DensityWeightedBO_core_trajectory
                 else
                     error('Unrecognized y centering type in LocalBayes');
                 end
-                std_yl = std(yl);
+                std_yl = max(std(yl), 1e-6);
 %                 std_yl = 1;
                 y = (yl - yCentering) / std_yl;
-                y(isnan(y)) = 0;
+                %y(isnan(y)) = 0;
 
                 % use CMA-ES to maximize exp(thompson) * density acquisition
                 newSamples = zeros(lambda, length(dist.mu));
@@ -45,7 +45,8 @@ classdef DensityWeightedBO_core_trajectory
                     if k > 1
                         D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
                     end
-                    [L, alpha] = getLowerCholesky(D, y, false, func.opts.noiseVariance);
+                    K = func.opts.scaleKernel(D, [0,0]);
+                    [L, alpha] = getLowerCholesky(K, y, false, func.opts.noiseVariance);
                     
                     if acq == 1
                         newSamples(k, :) = static_optimization_algs.DensityWeightedBO_core_trajectory.maxThompsonSampling(x, trajectories, L, alpha, dist, beta, func);

@@ -4,42 +4,12 @@ function [anext, prob, P] = actionSelectionDiscrete(policy, state, action, actio
         
     P = exp(feature * policy');
     P = P ./ sum(P,2);
-        
-    if nargout < 3
-        Pt = P';
-        prob = Pt((actionList == action)');
-    else
-        prob = [];
-    end    
+    
+    if isempty(action)
+        action = actionList(1 + sum(rand(size(P,1),1) > cumsum(P,2),2))';
+    end
+    Pt = P';
+    prob = Pt((actionList == action)');
+    
     anext = [];
 end
-
-
-% function [actionNext, prob, mu] = actionSelectionCartPole(policy, state, action, ~)
-%     %position
-%     %velocity
-%     %acceleration
-%     %angle
-%     %angularVelocity
-%     errordeviation = 1e-4;
-%     feature = state(:,2:5);
-%     mu = feature * policy';
-%     mu(mu > 1) = 1;
-%     mu(mu < -1) = -1;
-%     
-%     if nargout < 3
-%         if isempty(action)        
-%             noise = randn * errordeviation;
-%             actionNext = mu + noise;
-%             prob = (-(actionNext - mu).^2) ./ (2.*errordeviation);
-% 
-%         else
-%             actionNext = [];
-%             prob = (-(action - mu).^2) ./ (2.*errordeviation);
-% 
-%         end
-%     else
-%         actionNext = [];
-%         prob = [];
-%     end
-% end

@@ -40,7 +40,8 @@ classdef problemOptions < handle
         end      
         
         function D = trajectoryDistanceLocal(obj, Xm, Xn, trajectories, isCovMat, opts)
-            D = trajectoryDistanceLocal(Xm, Xn, trajectories, isCovMat, opts);
+%             D = trajectoryDistanceLocal(Xm, Xn, trajectories, isCovMat, opts);
+            D = trajectoryDistance(Xm, Xn, trajectories, isCovMat, opts);
         end        
       
         function [K,norml] = sexpScaleKernel(obj, D, hyper)
@@ -96,17 +97,17 @@ classdef problemOptions < handle
                 end
             elseif isequal(obj.opts.platform, 'pygym')
                 timesteps = uint16(obj.opts.timeSteps);
-                actionlist = uint8(obj.opts.actionList);
+                actionMisc = uint8(obj.opts.actionMisc);
                 
                 for i=1:size(samples,1)
                     if strcmp(obj.opts.env, 'cartPole')
-                        ret = py.gymCartPole.evaluate(samples(i,:),timesteps,actionlist);
+                        ret = py.gymCartPole.evaluate(samples(i,:),timesteps,obj.opts.actionMisc);
                     elseif strcmp(obj.opts.env, 'mountainCar')
-                        ret = py.gymMountainCar.evaluate(samples(i,:),timesteps,actionlist);
+                        ret = py.gymMountainCar.evaluate(samples(i,:),timesteps,actionMisc);
                     elseif strcmp(obj.opts.env, 'acroBot')
-                        ret = py.gymAcroBot.evaluate(samples(i,:),timesteps,actionlist);
+                        ret = py.gymAcroBot.evaluate(samples(i,:),timesteps,actionMisc);
                     elseif strcmp(obj.opts.env, 'mountainCarContinuous')
-                        ret = py.gymMountainCarContinuous.evaluate(samples(i,:),timesteps,obj.opts.errordeviation);
+                        ret = py.gymMountainCarContinuous.evaluate(samples(i,:),timesteps,actionMisc);
                     end
                     
                     states = double(py.array.array('d',py.numpy.nditer(ret{1,1})));

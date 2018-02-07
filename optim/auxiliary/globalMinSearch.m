@@ -29,15 +29,15 @@ function [xMin, fMin] = globalMinSearch(fcn, lb, ub, useGADSToolbox, hyperSearch
         
         options = optimoptions('fmincon','Display','off');
         
-        warning('off','backtrace');
-        warning off MATLAB:singularMatrix
-        warning off MATLAB:nearlySingularMatrix
+%         warning('off','backtrace');
+%         warning off MATLAB:singularMatrix
+%         warning off MATLAB:nearlySingularMatrix
         for i = 1:10
             [x(i,:), f(i)] = fmincon(fcn,x0(i,:),[],[],[],[],lb,ub,[],options);
         end
-        warning on MATLAB:singularMatrix
-        warning on MATLAB:nearlySingularMatrix
-        warning('on','backtrace');
+%         warning on MATLAB:singularMatrix
+%         warning on MATLAB:nearlySingularMatrix
+%         warning('on','backtrace');
 
         [fMin, idx] = min(f);
         xMin = x(idx,:);

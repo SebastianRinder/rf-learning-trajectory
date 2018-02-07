@@ -27,26 +27,23 @@ classdef globalBO
                 end
             end
 
-        %     D = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
-        %     [~,sigmal1] = func.opts.scaleKernel(D,[]);
-        %     D = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
-        %     [~,sigmal2] = func.opts.scaleKernel(D,[]);
-        % %     randSamples = randBound(lb,ub,300);
-        % %     D = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
-        % %     [~,sigmal] = func.opts.scaleKernel(D,[]);
-        %     func.opts.hyper = [0,log(mean([sigmal1,sigmal2]))];
-
             for i = initialSamplesCount+1:initialSamplesCount+func.opts.bayOptSteps
-                y = (knownY - max(knownY))./std(knownY);
+                stdy = max(std(knownY),1e-6);
+                y = (knownY - max(knownY))./stdy;
         %         y = knownY ./ func.opts.timeSteps;
 
-                D = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
+                D = func.opts.distanceMat(samples, samples, trajectories, 'kk', func.opts); %known known
                 if func.opts.hyperOptimize
-                    func.opts.hyper = optimizeHyper(samples,y,D, func.opts);
+                    func.opts.hyper = optimizeHyper(samples, y, D, func.opts);
+                    hyperTrace = [hyperTrace; func.opts.hyper];
+                    Ds = func.opts.distanceMat(randBound(lb, ub, size(samples,1)), samples, trajectories, 'uk', func.opts); %unknown known
+                    func.opts.hyper = optimizeHyper(samples, y, Ds, func.opts);
                 end
                 hyperTrace = [hyperTrace; func.opts.hyper];
-
-                [L, alpha] = getLowerCholesky(D, y, false, func.opts.noiseVariance);
+                
+                func.opts.hyper = [0,0];
+                K = func.opts.scaleKernel(D, func.opts.hyper);
+                [L, alpha] = getLowerCholesky(K, y, false, func.opts.noiseVariance);
 
                 if func.opts.useMaxMean
                     negGPMean = @(testX) -gaussianProcess(testX, samples, trajectories, L, alpha, func);
@@ -57,7 +54,13 @@ classdef globalBO
                 end           
 
                 negAcqFcn = @(testX) -expectedImprovement(testX, samples, trajectories, L, alpha, func, bestY);
+%                 tic
                 samples(i,:) = globalMinSearch(negAcqFcn, lb, ub, func.opts.useGADSToolbox, false);
+%                 [xxx,yyy] = globalMinSearch(negAcqFcn, lb, ub, func.opts.useGADSToolbox, false)
+%                 toc
+%                 tic
+%                 [xxx,yyy] = globalMinSearch(negAcqFcn, lb, ub, ~func.opts.useGADSToolbox, false)
+%                 toc
                 if func.opts.acquisitionPlot
                     selectFigure('Expected Improvement values (sorted)');
                     xplot = randBound(lb,ub,10000);

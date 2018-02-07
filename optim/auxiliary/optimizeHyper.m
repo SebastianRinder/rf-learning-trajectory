@@ -21,7 +21,7 @@ function hyper = optimizeHyper(knownX, y,D, opts)
         title(['sigmaf: ',num2str(exp(hyper(1))),', sigmal: ',num2str(exp(hyper(2)))]);
         hold off;
         pause(0.1);
-    elseif size(lb,2) == 1
+    elseif opts.hyperPlot && size(lb,2) == 1
         selectFigure('hyperPlot');
         clf;
         plotFcn(negHyperFcn,lb,ub,100,1);
@@ -53,7 +53,7 @@ function hyper = optimizeHyper(knownX, y,D, opts)
         else
             K = opts.scaleKernel(D, hyper);
         end
-        L = getLowerCholesky(K, y, true, opts.sigmaNoiseSquared);
+        L = getLowerCholesky(K, y, true, opts.noiseVariance);
 
         if ~isempty(L)
             like1 = 2*sum(log(diag(L)));    

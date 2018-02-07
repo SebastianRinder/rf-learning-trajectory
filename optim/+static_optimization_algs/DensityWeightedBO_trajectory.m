@@ -76,7 +76,8 @@ classdef DensityWeightedBO_trajectory
                 storedVals = [storedVals; newVals];
                 storedTrajectories = [storedTrajectories; newtrajectory];
                 
-                if fun.opts.verbose == 1
+                verbose = fun.opts.verbose;
+                if verbose == 1
                     fprintf('%g%%: ', round(iter .* 100 ./ nbIter));
                     fprintf(['rewards ' ,num2str(newVals'), ', ']);
                 end

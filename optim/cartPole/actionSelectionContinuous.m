@@ -3,20 +3,38 @@ function [actionNext, prob, mu] = actionSelectionContinuous(policy, state, actio
     mu = feature * policy';
     mu(mu > 1) = 1;
     mu(mu < -1) = -1;
-    
-    if nargout < 3
-        if isempty(action)        
-            noise = randn * errordeviation;
+        
+    if isempty(action)
+        if size(state,1) == 1 %generate an action for simulation and save corresponding probability
+            rr = randn;
+            noise = rr * errordeviation;
             actionNext = mu + noise;
-            prob = (-(actionNext - mu).^2);  %./ (2.*errordeviation.^2);
+            prob = (-(actionNext - mu).^2)./ (2.*errordeviation.^2);
 
-        else
+        else %only return mean of state feature for estimating distances between unknown trajectories
             actionNext = [];
-            prob = (-(action - mu).^2); %./ (2.*errordeviation.^2);
-
+            prob = [];
         end
-    else
+
+    else %return probabilities of state feature for given actions 
         actionNext = [];
-        prob = [];
+        prob = (-(action - mu).^2)./ (2.*errordeviation.^2);
     end
 end
+
+%         if isempty(action)
+%             if size(state,1) == 1
+%                 rr = randn;
+%                 prob = normpdf(rr);
+%                 noise = rr * errordeviation;
+%                 actionNext = mu + noise;
+%             else
+%                 actionNext = [];
+%                 prob = [];
+%             end
+%         
+%         else
+%             actionNext = [];
+%             prob = normpdf(abs(action-mu)./errordeviation);
+% 
+%         end   

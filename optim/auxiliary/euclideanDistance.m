@@ -4,7 +4,7 @@ function D = euclideanDistance(Xm, Xn)
 
     D = zeros(m,n);
 
-    if m==n && all(all(Xm == Xn))
+    if m==n && all(all(Xm == Xn)) %symmetric
         for i=1:size(Xm,1)
             D(i,i) = 0;
             k = i+1;
