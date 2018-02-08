@@ -8,7 +8,7 @@ classdef problemOptions < handle
     
     methods
         function obj = problemOptions(kernelName, platform, environment, optimizerType)    
-            obj.maxExp = 100;
+            obj.maxExp = 2;
             obj.opts = environmentSettings(environment, platform, 'none');
             obj.opts.platform = platform;
             obj.opts.env = environment;
@@ -78,11 +78,11 @@ classdef problemOptions < handle
                 sigmaf = exp(hyper(1,1));
                 sigmal = exp(hyper(1,2));
 
-                K = sigmaf .* exp (-D ./sigmal);
+                K = sigmaf.^ 2 .* exp (-D ./(sigmal.^ 2));
             else
                 K = [];                
-                norml = max(max(D)) / obj.maxExp;
-                norml = max(norml,1);
+                norml = sqrt(max(max(D))) / obj.maxExp;
+%                 norml = max(norml,1);
             end
         end
         

@@ -55,7 +55,7 @@ function [opts] = environmentSettings(env, platform, visualize)
             opts.actionMisc = 0:double(pyActionSpace.n)-1;
         else
             opts.actionSpace = 'continuous';
-            opts.actionMisc = 1e-3;
+            opts.actionMisc = 1e-4;
         end
     end
 
@@ -72,7 +72,7 @@ function [opts] = environmentSettings(env, platform, visualize)
             opts.rewardFcn = @rewardCartPole;
             opts.visFcn = @visCartPole;
             
-            opts.actionMisc = 1e-3;
+            opts.actionMisc = 1e-4;
 %         elseif isequal(env, 'bipedalWalker')
 %             opts.dim = 100; %24 state values + 1 bias value per action
 %             opts.actionSpace = 'continuous';

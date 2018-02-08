@@ -33,8 +33,13 @@ function D = trajectoryDistance(Xm, Xn, trajectories, kernelType, opts)
         end
     end
     
-    D(isnan(D)) = 0;
-    D(D<0) = 0;
+    if any(isnan(D(:))) || any(any(D<0))
+        keyboard;
+    end
+        
+    
+%     D(isnan(D)) = 0;
+%     D(D<0) = 0;
 end
 
 function D = importanceSampling(xNew, knownTrajectory, opts)

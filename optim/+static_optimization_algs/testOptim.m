@@ -195,7 +195,7 @@ dirStr = sprintf('results/%s_%s_%s_%s', optimizerType, env, platform, hrs);
 %for ed = 10.^[0:-1:-5]
 
 for kernelIdx = 3:3
-    seedInit = setRandom(32145);
+    seedInit = setRandom();
     func = problemOptions(kernel{kernelIdx},platform,env, optimizerType);
     optimizerInput.fun = func;
     mu = zeros(1,func.opts.dim);
@@ -207,9 +207,9 @@ for kernelIdx = 3:3
     func.opts.optimizerType = optimizerType;
     func.opts.cores = cores;
     func.opts.trajectoriesPerSample = 1;
-    func.opts.hyperOptimize = 1;
+    func.opts.hyperOptimize = 0;
     func.opts.hyperPlot = 1;
-    func.opts.acquisitionPlot = 0;
+    func.opts.acquisitionPlot = 1;
     func.opts.noiseVariance = 1e-6;
     
     % global opt
@@ -221,7 +221,7 @@ for kernelIdx = 3:3
     func.opts.useGADSToolbox = 1;
         
 
-    if kernelIdx == 3 && strcmp(optimizerType,'local')
+    if kernelIdx == 3 %&& strcmp(optimizerType,'local')
 
         ub = 1.*ones(1,func.opts.dim);
         lb = -1.*ub;
@@ -240,33 +240,49 @@ for kernelIdx = 3:3
             end
         end
 
-        D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, false, func.opts);
-        D2 = func.opts.distanceMat(samples, samples, trajectories, false, func.opts);
+        D1 = func.opts.distanceMat(randBound(lb,ub,10000), samples, trajectories, 'uk', func.opts);
+        D2 = func.opts.distanceMat(samples, samples, trajectories, 'kk', func.opts);
         randSamples = randBound(lb,ub,316);
-        D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, true, func.opts);
+        D3 = func.opts.distanceMat(randSamples, randSamples, trajectories, 'uu', func.opts);
     %     ttt = [max(D1(:)), max(D2(:)),max(D3(:))];
 
-        D1(isinf(D1)) = 0;
+%         D1(isinf(D1)) = 0;
 %         sigmal = max(D3(:))./mean([max(D1(:)), max(D2(:))]);
-        sigmal = max(D3(:))./mean(max(D1(:)));
-        func.opts.hyper = [0, log(sigmal)];
-%         func.opts.hyper = [0,0];
+%         sigmal = max(D3(:))./mean(max(D1(:)));
+%         func.opts.hyper = [0, log(sigmal)];
+        
+        [~,sigmal1] = func.opts.scaleKernel(D1,[]);
+        [~,sigmal2] = func.opts.scaleKernel(D2,[]);
+        [~,sigmal3] = func.opts.scaleKernel(D3,[]);
+        
+%         sigmal3 = max(D3(:))./max(D1(:));
+        
+        func.opts.hyperl.uk = max(log(sigmal1), 0);
+        func.opts.hyperl.kk = max(log(sigmal2), 0);
+        func.opts.hyperl.uu = log(sigmal3);
+%         func.opts.hyperl.uk = 0;
+%         func.opts.hyperl.kk = 0;
+%         func.opts.hyperl.uu = 0;
 
+        K1 = func.opts.scaleKernel(D1,[0 func.opts.hyperl.uk]);
+        K2 = func.opts.scaleKernel(D2,[0 func.opts.hyperl.kk]);
+        K3 = func.opts.scaleKernel(D3,[0 func.opts.hyperl.uu]);
+        
         figure;
         subplot(2,3,1);        
         histogram(D1);
         subplot(2,3,4);
-        histogram(func.opts.scaleKernel(D1,[0 0]));
+        histogram(K1);
         subplot(2,3,2);
         histogram(D2);
         subplot(2,3,5);
-        histogram(func.opts.scaleKernel(D2,[0 0]));
+        histogram(K2);
         subplot(2,3,3);
-        histogram(D3/sigmal);
+        histogram(D3);
         subplot(2,3,6);
-        histogram(func.opts.scaleKernel(D3,func.opts.hyper));
+        histogram(K3);
 %         histogram(func.opts.scaleKernel(D3,[0 0]));
-        
+%         keyboard;
     else
         func.opts.hyper = [0,0];
     end
@@ -311,7 +327,7 @@ end
 
 function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
     ret = [];
-    seedStartOpt = setRandom(32145);
+    seedStartOpt = setRandom();
     tic;
     if strcmp(func.opts.optimizerType, 'local')
         ret.knownY = static_optimization_algs.DensityWeightedBO_trajectory.optimizeStruct(optimizerInput, func);

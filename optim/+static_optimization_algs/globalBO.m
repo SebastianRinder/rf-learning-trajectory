@@ -30,19 +30,16 @@ classdef globalBO
             for i = initialSamplesCount+1:initialSamplesCount+func.opts.bayOptSteps
                 stdy = max(std(knownY),1e-6);
                 y = (knownY - max(knownY))./stdy;
+                y = (knownY - mean(knownY))./stdy;
         %         y = knownY ./ func.opts.timeSteps;
 
                 D = func.opts.distanceMat(samples, samples, trajectories, 'kk', func.opts); %known known
-                if func.opts.hyperOptimize
-                    func.opts.hyper = optimizeHyper(samples, y, D, func.opts);
-                    hyperTrace = [hyperTrace; func.opts.hyper];
-                    Ds = func.opts.distanceMat(randBound(lb, ub, size(samples,1)), samples, trajectories, 'uk', func.opts); %unknown known
-                    func.opts.hyper = optimizeHyper(samples, y, Ds, func.opts);
-                end
-                hyperTrace = [hyperTrace; func.opts.hyper];
+%                 if func.opts.hyperOptimize
+%                     func.opts.hyper = optimizeHyper(samples, y, D, func.opts);
+%                 end
+                hyperTrace = [hyperTrace; func.opts.hyperl.uk, func.opts.hyperl.kk, func.opts.hyperl.uu];
                 
-                func.opts.hyper = [0,0];
-                K = func.opts.scaleKernel(D, func.opts.hyper);
+                K = func.opts.scaleKernel(D, [0, func.opts.hyperl.kk]);
                 [L, alpha] = getLowerCholesky(K, y, false, func.opts.noiseVariance);
 
                 if func.opts.useMaxMean
@@ -78,8 +75,9 @@ classdef globalBO
                     disp(['trial ',num2str(trial) ,...
                         ', step ',num2str(i-initialSamplesCount) ,...
                         ', cr ',num2str(knownY(i,1)),...
-                        ', sf ',num2str(exp(hyperTrace(end,1))),...
-                        ', sl ',num2str(exp(hyperTrace(end,2)))...
+                        ', sluk ',num2str(exp(hyperTrace(end,1)))...
+                        ', slkk ',num2str(exp(hyperTrace(end,2)))...
+                        ', sluu ',num2str(exp(hyperTrace(end,3)))...
                         ]);
                 end
             end
