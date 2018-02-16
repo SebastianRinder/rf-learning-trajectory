@@ -22,7 +22,7 @@ function plotFcn(fcn,lb,ub,nrPoints,dim)
 %                 nvAll(j,k) = nv;
             end
         end
-
+        fVals = real(fVals);
         surf(X1,X2,fVals);
         alpha 0.5
         

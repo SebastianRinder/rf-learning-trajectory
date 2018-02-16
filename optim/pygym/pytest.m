@@ -30,7 +30,7 @@ P = py.sys.path;
 disp(P);
 
 mod = py.importlib.import_module('gymCartPole');
-py.reload(mod);
+py.importlib.reload(mod);
 py.gymCartPole.init_environment('CartPole-v0');
 policy= [2, 3, 1, 0, 1, 1, 1, 0];
 timesteps = uint16(1000);

@@ -62,4 +62,4 @@ def reset():
     return state
 
 #a,b = init_environment('Acrobot-v1')
-#evaluate(np.random.uniform(-1, 1, 30), 1000, np.array([0, 1, 2]))
+#evaluate(np.random.uniform(-1, 1, 21), 1000, np.array([0, 1, 2]))

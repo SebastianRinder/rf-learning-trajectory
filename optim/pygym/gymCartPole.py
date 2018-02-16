@@ -25,7 +25,7 @@ def evaluate(policy, timesteps, actionlist):
 
     if isinstance(env.action_space, gym.spaces.discrete.Discrete):
         for t in range(timesteps):
-            # env.render()
+            #env.render()
             action, prob = action_selection_discrete(policy, state, actionlist)
             state_next, reward, done, info = env.step(action)
 

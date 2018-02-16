@@ -4,6 +4,7 @@ function [anext, prob, P] = actionSelectionDiscrete(policy, state, action, actio
         
     P = exp(feature * policy');
     P = P ./ sum(P,2);
+    P(isnan(P)) = 1;
     
     if isempty(action)
         action = actionList(1 + sum(rand(size(P,1),1) > cumsum(P,2),2))';

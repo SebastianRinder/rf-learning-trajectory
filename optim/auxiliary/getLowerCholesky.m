@@ -1,6 +1,11 @@
 function [L, alpha] = getLowerCholesky(K, knownY, calcHyper, noiseVariance)    
     alpha = [];    
     
+    global nv;
+    if calcHyper
+        noiseVariance = nv;
+    end
+    
     p = 1;
     doublings = 0;
     while p > 0 && doublings < 100
@@ -16,8 +21,9 @@ function [L, alpha] = getLowerCholesky(K, knownY, calcHyper, noiseVariance)
             end
         end        
     end
-%     global nv;
-%     nv = noiseVariance;
+    if ~calcHyper   
+        nv = noiseVariance;
+    end
 
     if nargout > 1 && ~isempty(L)
         alpha = L'\(L \ knownY);        %Rasmussen, Williams 2005

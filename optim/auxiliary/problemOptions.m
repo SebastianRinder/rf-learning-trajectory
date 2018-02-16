@@ -8,7 +8,7 @@ classdef problemOptions < handle
     
     methods
         function obj = problemOptions(kernelName, platform, environment, optimizerType)    
-            obj.maxExp = 2;
+            obj.maxExp = 20;
             obj.opts = environmentSettings(environment, platform, 'none');
             obj.opts.platform = platform;
             obj.opts.env = environment;
@@ -101,7 +101,7 @@ classdef problemOptions < handle
                 
                 for i=1:size(samples,1)
                     if strcmp(obj.opts.env, 'cartPole')
-                        ret = py.gymCartPole.evaluate(samples(i,:),timesteps,obj.opts.actionMisc);
+                        ret = py.gymCartPole.evaluate(samples(i,:),timesteps,actionMisc);
                     elseif strcmp(obj.opts.env, 'mountainCar')
                         ret = py.gymMountainCar.evaluate(samples(i,:),timesteps,actionMisc);
                     elseif strcmp(obj.opts.env, 'acroBot')

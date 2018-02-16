@@ -169,32 +169,33 @@ optimizerInput.videoFile = [];
 % optimizerType = 'local';
 optimizerType = 'global';
 
-trials = 5;
-cores = 4;
+trials = 32;
+cores = 32;
 useParallel = 0;
 kernel = {'sexp','matern52','trajectory'};
 
 verbose = 1;
 
-% platform = 'pygym';
-platform = 'matlab';
+platform = 'pygym';
+% platform = 'matlab';
 
 % env = 'mountainCarContinuous';
 % env = 'acroBot';
 % env = 'mountainCar';
-env = 'cartPole';
+% env = 'cartPole';
 
+envs = {'cartPole', 'acroBot', 'mountainCar', 'mountainCarContinuous'};
 
 addpath('pygym');
 addpath('auxiliary');
 addpath('cartPole');
- 
+
+for envIdx = 4:4
+    env = envs{envIdx};
 hrs = datestr(now,'dd-mm-yyyy_HH-MM');
 dirStr = sprintf('results/%s_%s_%s_%s', optimizerType, env, platform, hrs);
 
-%for ed = 10.^[0:-1:-5]
-
-for kernelIdx = 3:3
+for kernelIdx = 1:3
     seedInit = setRandom();
     func = problemOptions(kernel{kernelIdx},platform,env, optimizerType);
     optimizerInput.fun = func;
@@ -207,9 +208,9 @@ for kernelIdx = 3:3
     func.opts.optimizerType = optimizerType;
     func.opts.cores = cores;
     func.opts.trajectoriesPerSample = 1;
-    func.opts.hyperOptimize = 0;
-    func.opts.hyperPlot = 1;
-    func.opts.acquisitionPlot = 1;
+%     func.opts.hyperOptimize = 0;
+    func.opts.hyperPlot = 0;
+    func.opts.acquisitionPlot = 0;
     func.opts.noiseVariance = 1e-6;
     
     % global opt
@@ -219,9 +220,10 @@ for kernelIdx = 3:3
     func.opts.initialSamplesCount = 10;
     func.opts.useMaxMean = 0;
     func.opts.useGADSToolbox = 1;
+    func.opts.kernel = kernel{kernelIdx};
         
 
-    if kernelIdx == 3 %&& strcmp(optimizerType,'local')
+    if 0% kernelIdx == 3 %&& strcmp(optimizerType,'local')
 
         ub = 1.*ones(1,func.opts.dim);
         lb = -1.*ub;
@@ -260,9 +262,6 @@ for kernelIdx = 3:3
         func.opts.hyperl.uk = max(log(sigmal1), 0);
         func.opts.hyperl.kk = max(log(sigmal2), 0);
         func.opts.hyperl.uu = log(sigmal3);
-%         func.opts.hyperl.uk = 0;
-%         func.opts.hyperl.kk = 0;
-%         func.opts.hyperl.uu = 0;
 
         K1 = func.opts.scaleKernel(D1,[0 func.opts.hyperl.uk]);
         K2 = func.opts.scaleKernel(D2,[0 func.opts.hyperl.kk]);
@@ -284,7 +283,10 @@ for kernelIdx = 3:3
 %         histogram(func.opts.scaleKernel(D3,[0 0]));
 %         keyboard;
     else
-        func.opts.hyper = [0,0];
+        func.opts.hyper = [0 0];
+        func.opts.hyperl.uk = 0;
+        func.opts.hyperl.kk = 0;
+        func.opts.hyperl.uu = 0;
     end
     
     trial = 1;
@@ -299,35 +301,38 @@ for kernelIdx = 3:3
                 if strcmp(me.identifier,'parallel:cluster:LicenseUnavailable')
                     func.opts.useParallel = 0;
                 else
-                    hrs = datestr(now,'_dd-mm-yyyy_HH-MM');
-                    save(['results/error',hrs,'.mat'],'me');
                     disp(getReport(me));
-                    exit;
+                    return;
                 end
             end
         end
-        
-        if func.opts.useParallel
-            parfor t = trial:trials
-                optiHelp(func,optimizerInput,t,seedInit,dirStr,kernel{kernelIdx});
+        try
+            if func.opts.useParallel
+                parfor t = trial:trials
+                    ret = optiHelp(func,optimizerInput,t,seedInit,dirStr,kernel{kernelIdx});
+                end
+                trial = trials + 1;
+            else
+                ret = optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernel{kernelIdx});
+                trial = trial + 1;
             end
-            trial = trials + 1;
-        else
-            optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernel{kernelIdx});
-            trial = trial + 1;
+        catch me
+            hrs = datestr(now,'_dd-mm-yyyy_HH-MM');
+            save(['results/error',hrs,'.mat'],'me');
+            disp(getReport(me));
+            return;
         end
     end  
-   
-%     hrs = datestr(now,'dd-mm-yyyy_HH-MM');
-%     saveStr = sprintf('results/%s_%s_%s_%s_%0.0e_%s.mat', 'local_thompson_full_300', env, platform, kernel{kernelIdx}, func.opts.noiseVariance, hrs);
-%     save(saveStr,'ret');
+end
+end
 end
 
-end
-
-function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
+function ret=optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
     ret = [];
     seedStartOpt = setRandom();
+    ret.noiseVariance = func.opts.noiseVariance;
+    ret.seedStartOpt = seedStartOpt;
+    ret.seedInit = seedInit;
     tic;
     if strcmp(func.opts.optimizerType, 'local')
         ret.knownY = static_optimization_algs.DensityWeightedBO_trajectory.optimizeStruct(optimizerInput, func);
@@ -335,10 +340,8 @@ function optiHelp(func,optimizerInput,trial,seedInit,dirStr,kernelStr)
         ret.knownY = static_optimization_algs.globalBO.optimze(func, trial);
     end
     ret.timeTakenSeconds = toc;
-    ret.hyper = func.opts.hyper;
-    ret.noiseVariance = func.opts.noiseVariance;
-    ret.seedStartOpt = seedStartOpt;
-    ret.seedInit = seedInit;
+    ret.hyperl = func.opts.hyperl;
+    
     if ~exist(dirStr,'dir')
         mkdir(dirStr);
     end
@@ -354,30 +357,3 @@ function seedStartOpt = setRandom(seedStartOpt)
     end
     rng(seedStartOpt);
 end
-
-%% performance plotting
-% fname = [rootPlot 'perfOn_' funSignature '_' all_signatures{1}];
-% hnd = figure(5);
-% hold on;
-% for k = 1:length(optimizers)
-%     plot(all_perfs{k});
-%     perfs = all_perfs{k};
-% end
-% legHnd = legend(all_signatures{:}, 'Location','southeast');
-% set(legHnd, 'interpreter', 'none');
-% set(legHnd, 'FontSize', 7);
-% hgexport(hnd, [fname '.eps']);
-
-%% kl plotting
-% fname = [rootPlot 'klOn_' funSignature '_' all_signatures{1}];
-% hnd = figure(6);
-% for k = 1:length(optimizers)
-%     semilogy(all_perfs{k}(:, 1), all_kls{k});
-%     hold on;
-% end
-% hold off;
-% legHnd = legend(all_signatures{:}, 'Location','southeast');
-% set(legHnd, 'interpreter', 'none');
-% set(legHnd, 'FontSize', 7);
-% hgexport(hnd, [fname '.eps']); 
-

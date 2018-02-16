@@ -61,5 +61,5 @@ def reset():
     state = env.reset()
     return state
 
-init_environment('MountainCar-v0')
-evaluate(np.random.uniform(-1, 1, 30), 1000, np.array([0, 1, 2]))
+#init_environment('MountainCar-v0')
+#evaluate(np.random.uniform(-1, 1, 30), 1000, np.array([0, 1, 2]))

@@ -4,16 +4,26 @@ function [xMin, fMin] = globalMinSearch(fcn, lb, ub, useGADSToolbox, hyperSearch
     if useGADSToolbox
         x0 = randBound(lb,ub,1);
         k = 0;
-        while fcn(x0) == Inf && k < 1000
+        while (isinf(fcn(x0)) || isnan(fcn(x0))) && k < 1000
             x0 = randBound(lb,ub,1);
             k = k + 1;
         end
-        if k >= 1000, error('no initial Point found'); end
-        opts = optimoptions(@fmincon,'Algorithm','interior-point');
-        problem = createOptimProblem('fmincon','objective',fcn,'x0',x0,'lb',lb,'ub',ub,'options',opts);
-        gs = GlobalSearch('Display', 'off'); %, 'MaxTime', 60);
-
-        [xMin, fMin] = run(gs,problem);
+        if k >= 1000
+            %, error('no initial Point found')
+            xMin = [];
+            fMin = [];        
+        else
+            opts = optimoptions(@fmincon,'Algorithm','interior-point');
+            problem = createOptimProblem('fmincon','objective',fcn,'x0',x0,'lb',lb,'ub',ub,'options',opts);
+            gs = GlobalSearch('Display', 'off'); %, 'MaxTime', 60);
+            try
+                [xMin, fMin] = run(gs,problem);
+            catch me
+                disp(getReport(me));
+                xMin = [];
+                fMin = [];
+            end
+        end
     else
         xRand = randBound(lb,ub,10000);
         if hyperSearch            

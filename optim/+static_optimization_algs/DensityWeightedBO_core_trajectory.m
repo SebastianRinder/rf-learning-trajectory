@@ -34,10 +34,10 @@ classdef DensityWeightedBO_core_trajectory
                 
                 
                 D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
-                if func.opts.hyperOptimize
-                    func.opts.hyper = optimizeHyper(x,y,D, func.opts);
-                end
-                hyperTrace = [hyperTrace; func.opts.hyper];
+%                 if func.opts.hyperOptimize
+%                     func.opts.hyper = optimizeHyper(x,y,D, func.opts);
+%                 end
+                hyperTrace = [hyperTrace; func.opts.hyperl.uk, func.opts.hyperl.kk, func.opts.hyperl.uu];
                 
                 acq = 1;
                 
@@ -45,7 +45,7 @@ classdef DensityWeightedBO_core_trajectory
                     if k > 1
                         D = func.opts.distanceMat(x, x, trajectories, false, func.opts);
                     end
-                    K = func.opts.scaleKernel(D, [0,0]);
+                    K = func.opts.scaleKernel(D, [0,func.opts.hyperl.kk]);
                     [L, alpha] = getLowerCholesky(K, y, false, func.opts.noiseVariance);
                     
                     if acq == 1
